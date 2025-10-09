@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useUnsplash } from '~/composables/useUnsplash'
 
 const city = ref('')
@@ -16,6 +16,14 @@ watch(
     }
   }
 )
+const emits = defineEmits<{
+  (e: 'update:photo', photo: any): void
+}>()
+
+// Watch photo changes and emit to parent
+watch(photo, (newPhoto) => {
+  if (newPhoto) emits('update:photo', newPhoto)
+})
 
 function handleSearch() {
   fetchPhoto(city.value)
@@ -35,16 +43,5 @@ function handleSearch() {
 
     <div v-if="loading" class="mt-4">Loading...</div>
     <div v-if="error" class="text-red-500 mt-4">{{ error }}</div>
-
-    <div v-if="photo" class="mt-6">
-      <img
-        :src="photo.urls?.regular"
-        :alt="photo.alt_description || city"
-        class="rounded-lg shadow-lg mx-auto max-h-[500px]"
-      />
-      <p class="mt-2 text-sm text-gray-600">
-        Photo by {{ photo.user?.name }} on Unsplash
-      </p>
-    </div>
   </div>
 </template>

@@ -10,7 +10,11 @@ export default <Partial<Config>>{
     './nuxt.config.{js,ts}'
   ],
   theme: {
-    extend: {}
+    extend: {
+      fontFamily: {
+        sans: ['"Lexend"', 'ui-sans-serif', 'system-ui', 'sans-serif']
+      }
+    }
   },
   plugins: []
 }
