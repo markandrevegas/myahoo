@@ -8,5 +8,9 @@ export default defineNuxtConfig({
     "@nuxt/fonts",
     "@nuxt/icon",
     "@nuxt/image"
-  ]
+  ],
+  runtimeConfig: {
+    unsplashAccessKey: process.env.UNSPLASH_ACCESS_KEY,
+    public: {}
+  }
 })
