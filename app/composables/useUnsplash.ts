@@ -1,7 +1,7 @@
 import { ref, onMounted } from 'vue'
 
 export const useUnsplash = () => {
-  const DEFAULT_CITY = 'Paris'
+  const DEFAULT_CITY = "Copenhagen"
 
   const photo = ref<any>(null)
   const city = ref<string>(DEFAULT_CITY)

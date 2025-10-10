@@ -5,11 +5,11 @@
         <div class="relative z-30 w-full h-full flex flex-col justify-between" style="min-height: 896px; min-width: 430px;">
           <div class="relative z-20 h-full w-full p-8">
             <Controls />
-            <div class="p-8 border-t border-white absolute bottom-0 h-96 flex flex-col items-start">
+            <div class="border-t border-white absolute bottom-0 h-96 flex flex-col items-start">
               <h1 class="text-white text-8xl">19</h1>
             </div>
           </div>
-          <div class="hidden">
+          <div class="relative z-20 p-8">
             <CityPhoto @update:photo="photoData = $event" />
           </div>
           <div class="absolute inset-0 w-full h-full z-10 bg-sky-950 opacity-40"></div>
