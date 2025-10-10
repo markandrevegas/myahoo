@@ -1,4 +1,4 @@
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watchEffect } from 'vue'
 
 export const useUnsplash = () => {
   const DEFAULT_CITY = "Copenhagen"
@@ -43,35 +43,36 @@ export const useUnsplash = () => {
     }
   }
 
-  // Check stored data and handle default logic
+  // Load from localStorage on mount
   onMounted(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('unsplashPhoto')
-
       if (stored) {
         try {
           const parsed = JSON.parse(stored)
-          const storedCity = parsed.city
-          const storedPhoto = parsed.photo
-
-          // If stored city differs from DEFAULT_CITY → fetch new photo
-          if (storedCity !== DEFAULT_CITY) {
-            fetchPhoto(DEFAULT_CITY)
-            return
-          }
-
-          // Otherwise, use stored photo
-          photo.value = storedPhoto
-          city.value = storedCity || DEFAULT_CITY
+          photo.value = parsed.photo
+          city.value = parsed.city || DEFAULT_CITY
           return
         } catch (e) {
           console.warn('Failed to parse stored Unsplash photo', e)
         }
       }
     }
-
-    // No stored data or error parsing → fallback to default
     fetchPhoto(DEFAULT_CITY)
+  })
+
+  // 🔹 Keep localStorage up-to-date whenever city or photo changes
+  watchEffect(() => {
+    if (typeof window !== 'undefined' && photo.value && city.value) {
+      localStorage.setItem(
+        'unsplashPhoto',
+        JSON.stringify({
+          city: city.value,
+          photo: photo.value,
+          timestamp: Date.now(),
+        })
+      )
+    }
   })
 
   return { photo, city, loading, error, fetchPhoto }
