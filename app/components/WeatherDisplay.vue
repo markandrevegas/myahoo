@@ -8,9 +8,7 @@
             <div class="absolute bottom-0 h-96 flex flex-col items-start text-white">
               </div>
           </div>
-          <div class="relative z-20 p-8">
-          </div>
-          <div class="absolute inset-0 w-full h-full z-10 bg-sky-950 opacity-30"></div>
+          <div class="absolute inset-0 w-full h-full z-10 bg-sky-950 opacity-20"></div>
         </div>
       </div>
       <div v-if="photoData" class="absolute inset-0" :style="{ backgroundImage: `url(${photoData.urls.regular})`, backgroundSize: 'cover', backgroundPosition: 'center' }"></div>
@@ -22,20 +20,12 @@
           </button>
         </div>
         <h2 class="text-xl font-semibold mb-4">Search for a City</h2>
-        <form @submit.prevent="searchCity">
-          <input
-            type="text"
-            placeholder="Enter city name..."
-            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-            v-model="cityInput"
-          />
-          <button
-            type="submit"
-            class="w-full p-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 transition duration-150"
-          >
+        <div class="flex justify-start">
+          <input type="text" placeholder="Enter city name..." class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4" v-model="cityInput" />
+          <button @click="searchCity" class="w-full p-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 transition duration-150">
             Search
           </button>
-        </form>
+        </div>
       </div>
       </div>
   </div>
@@ -50,9 +40,7 @@ import { ref } from 'vue'
 import { useUnsplash } from '~/composables/useUnsplash'
 interface UnsplashPhoto {
   id: string
-  urls: {
-    regular: string
-  }
+  urls: { regular: string }
   alt_description?: string
   city?: string
 }
@@ -87,15 +75,19 @@ const searchCity = () => {
   }
 }
 
-const loadCityFromStorage = () => {
+const loadFromStorage = () => {
   const stored = localStorage.getItem('unsplashPhoto')
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored)
+  if (!stored) return
+
+  try {
+    const parsed = JSON.parse(stored)
+    if (parsed?.photo?.urls?.regular) {
+      photoData.value = parsed.photo
       city.value = parsed.city || ''
-    } catch (e) {
-      console.warn('Failed to parse stored city:', e)
+      console.log('Loaded from localStorage:', city.value)
     }
+  } catch (e) {
+    console.warn('Failed to parse stored photo:', e)
   }
 }
 
@@ -112,21 +104,25 @@ watch(
   }
 )
 
-watch(photo, (newPhoto: UnsplashPhoto | null) => {
-  if (newPhoto) {
+watch(photo, (newPhoto) => {
+  if (newPhoto && city.value) {
     photoData.value = newPhoto
-    localStorage.setItem('unsplashPhoto', JSON.stringify({
-      ...newPhoto,
-      city: city.value
-    }))
-  }
-}, { immediate: true })
-
+    localStorage.setItem(
+      'unsplashPhoto',
+      JSON.stringify({
+        city: city.value,
+        photo: newPhoto,
+        timestamp: Date.now(),
+      })
+    )
+  }},
+  { immediate: true }
+)
 onMounted(() => {
-  loadCityFromStorage()
+  loadFromStorage()
   window.addEventListener('storage', (event) => {
     if (event.key === 'unsplashPhoto' && event.newValue) {
-      loadCityFromStorage()
+      loadFromStorage()
     }
   })
 })
