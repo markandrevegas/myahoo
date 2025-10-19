@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const accessKey = process.env.UNSPLASH_ACCESS_KEY
-  const baseUrl = 'https://api.unsplash.com/photos/random'
+  const baseUrl = process.env.UNSPLASH_BASE + '/photos/random'
   const keywords = `${city}, landmark, capital`
 
     const buildUrl = (orientation: string) =>

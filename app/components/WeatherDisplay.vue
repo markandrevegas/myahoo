@@ -1,11 +1,11 @@
 <template>
   <div class="flex justify-center items-center h-screen bg-gray-100">
-    <div class="relative border border-gray-400 rounded-[40px] overflow-auto shadow-lg bg-white" style="width: 430px; height: 896px;">
+    <div class="relative border border-gray-400 rounded-[40px] overflow-auto shadow-lg bg-white" style="width: 430px; height: 810px;">
       <div class="relative h-full w-full overflow-hidden">
-        <div class="relative z-30 w-full h-full flex flex-col justify-between" style="min-height: 896px; min-width: 430px;">
+        <div class="relative z-30 w-full h-full flex flex-col justify-between" style="min-height: 810px; min-width: 430px;">
           <div class="relative z-20 h-full w-full p-8">
             <Controls :city="city" @open-search="openSearch" />
-            <div v-if="weatherData" class="absolute bottom-0 h-96 flex flex-col items-start text-white">
+            <div v-if="weatherData" class="absolute bottom-0 h-64 flex flex-col items-start text-white">
               <span class="text-xl capitalize block">{{ weatherMain || '' }}</span>
               <div class="flex justify-start gap-8">
                 <div class="flex justify-start items-center gap-1">
@@ -175,16 +175,20 @@ const fetchWeather = async (cityName: string) => {
 }
 
 // --- City search ---
-const searchCity = () => {
+const searchCity = async () => {
   const trimmedCity = cityInput.value.trim()
-  if (trimmedCity) {
-    console.log('Searching for city:', trimmedCity)
-    fetchPhoto(trimmedCity)
-    fetchWeather(trimmedCity)
-    city.value = trimmedCity
+  if (!trimmedCity) return
 
-    closeSearch()
-  }
+  console.log('Searching for city:', trimmedCity)
+  city.value = trimmedCity
+
+  await Promise.all([
+    fetchPhoto(trimmedCity),
+    fetchWeather(trimmedCity)
+  ])
+
+  localStorage.setItem('lastCity', trimmedCity)
+  closeSearch()
 }
 
 // --- Load from storage ---

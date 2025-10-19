@@ -33,6 +33,7 @@ export default defineNuxtConfig({
     openWeatherApiKey: process.env.OPENWEATHER_API_KEY,
     public: {
       openWeatherApiKey: process.env.OPENWEATHER_API_KEY,
+      unsplashAccessKey: process.env.UNSPLASH_ACCESS_KEY
     }
   }
 })
