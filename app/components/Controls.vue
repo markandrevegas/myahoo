@@ -4,6 +4,7 @@ import { ref, onMounted } from 'vue'
 // 1. Define the event this component can emit
 const emit = defineEmits<{
   (e: 'open-search'): void
+  (e: 'open-list'): void
 }>()
 const props = defineProps<{
   city: string
@@ -15,6 +16,9 @@ const localTime = ref<string>('')
 // 2. Function to handle the click on the plus sign
 const handleOpenSearch = () => {
   emit('open-search')
+}
+const handleOpenList= () => {
+  emit('open-list')
 }
 
 // --- Methods ---
@@ -64,7 +68,7 @@ onMounted(() => {
 
 <template>
   <div class="w-full flex justify-between items-center text-white">
-    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="-5 -7 24 24">
+    <svg @click="handleOpenList"  xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="-5 -7 24 24">
       <path fill="currentColor" d="M1 0h5a1 1 0 1 1 0 2H1a1 1 0 1 1 0-2m7 8h5a1 1 0 0 1 0 2H8a1 1 0 1 1 0-2M1 4h12a1 1 0 0 1 0 2H1a1 1 0 1 1 0-2"/>
     </svg>
 

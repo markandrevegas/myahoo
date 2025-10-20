@@ -1,13 +1,16 @@
 <template>
   <div class="flex justify-center items-center h-screen bg-gray-100">
-    <div class="relative border border-gray-400 rounded-[40px] overflow-auto shadow-lg bg-white" style="width: 430px; height: 810px;">
+    <div class="relative rounded-[40px] overflow-auto shadow-lg bg-white" style="width: 430px; height: 810px;">
       <div class="relative h-full w-full overflow-hidden">
         <div class="relative z-30 w-full h-full flex flex-col justify-between" style="min-height: 810px; min-width: 430px;">
           <div class="relative z-20 h-full w-full p-8">
-            <Controls :city="city" @open-search="openSearch" />
+            <Controls :city="city" @open-search="toggleSearchDrawer" @open-list="toggleDrawer" @city-selected="fetchWeatherForCity" />
             <div v-if="weatherData" class="absolute bottom-0 h-64 flex flex-col items-start text-white">
-              <span class="text-xl capitalize block">{{ weatherMain || '' }}</span>
-              <div class="flex justify-start gap-8">
+              <div class="flex justify-start items-center w-full gap-2">
+                <Icon name="wi:cloudy" class="size-8" />
+                <span class="text-lg capitalize">{{ weatherMain || '' }}</span>
+              </div>
+              <div class="flex justify-start gap-2">
                 <div class="flex justify-start items-center gap-1">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="-5 -4.5 24 24">
                     <path fill="currentColor" d="m6 4.071l-3.95 3.95A1 1 0 0 1 .636 6.607L6.293.95a.997.997 0 0 1 1.414 0l5.657 5.657A1 1 0 0 1 11.95 8.02L8 4.07v9.586a1 1 0 1 1-2 0z"/></svg>
@@ -19,45 +22,85 @@
                   <span>{{ tempMin !== null ? tempMin.toFixed(0) : '--' }}°</span>
                 </div>
               </div>
-              <h1 class="text-8xl tracking-tighter">{{ Math.round(weatherData.main.temp) }}</h1>
+              <h1 class="text-8xl font-light">{{ Math.round(weatherData.main.temp) }}</h1>
             </div>
           </div>
-          <div class="absolute inset-0 w-full h-full z-10 bg-sky-950 opacity-20"></div>
+          <div class="absolute inset-0 w-full h-full z-10 bg-gradient-to-t from-black/80 to-transparent"></div>
         </div>
       </div>
 
-      <div v-if="photoData" class="absolute inset-0" :style="{ backgroundImage: `url(${photoData.urls.regular})`, backgroundSize: 'cover', backgroundPosition: 'center' }"></div>
+      <div v-if="photoData" class="absolute inset-0">
+        <div class="w-full h-full filter brightness-110 contrast-110 saturate-110" :style="{ backgroundImage: `url(${photoData.urls.regular})`, backgroundSize: 'cover', backgroundPosition: 'center'}"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-black/30"></div>
+      </div>
       <div v-if="loading" class="absolute inset-0 flex flex-col justify-center items-center">
         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
           <path fill="currentColor" d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25"/><circle cx="12" cy="2.5" r="1.5" fill="currentColor"><animateTransform attributeName="transform" dur="0.75s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"/></circle></svg>
       </div>
-      <div v-if="error" class="absolute inset-0 bg-red-600/40"></div>
-
-      <div v-if="showCitySearch" class="absolute inset-0 z-50 bg-gray-900 text-gray-200 p-8 flex flex-col gap-4">
-        <div class="w-full flex justify-between items-center">
-          <svg class="invisible" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="-5 -7 24 24">
-            <path fill="currentColor" d="M1 0h5a1 1 0 1 1 0 2H1a1 1 0 1 1 0-2m7 8h5a1 1 0 0 1 0 2H8a1 1 0 1 1 0-2M1 4h12a1 1 0 0 1 0 2H1a1 1 0 1 1 0-2"/>
-          </svg>
-
-          <div class="flex flex-col justify-center items-center">
-            <span class="text-lg">Add a new location</span>
+      <div v-if="error" class="absolute inset-0 bg-sky-950"></div>
+      <transition name="slideLeft">
+        <div v-if="showDrawer || showSearchDrawer" class="absolute inset-0 bg-slate-100/40 z-40" @click.self="toggleDrawer"></div>
+      </transition>
+      <transition name="slide-left">
+        <aside v-if="showDrawer" class="absolute top-0 left-0 w-80 h-full bg-gray-900 text-gray-300 z-50 p-8 flex flex-col">
+          <div class="flex-shrink-0 flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold">Locations</h2>
+            <button @click="toggleDrawer" aria-label="Close">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-1 -1 24 24">
+                <path
+                  fill="currentColor"
+                  d="m12 10.586l4.95-4.95l1.414 1.414L13.414 12l4.95 4.95l-1.414 1.414L12 13.414l-4.95 4.95l-1.414-1.414L10.586 12l-4.95-4.95L7.05 5.636z"
+                />
+              </svg>
+            </button>
           </div>
-
-          <button @click="closeSearch" class="p-1 rounded-full hover:bg-gray-900/10 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="-6 -6 24 24"><path fill="currentColor" d="m7.314 5.9l3.535-3.536A1 1 0 1 0 9.435.95L5.899 4.485L2.364.95A1 1 0 1 0 .95 2.364l3.535 3.535L.95 9.435a1 1 0 1 0 1.414 1.414l3.535-3.535l3.536 3.535a1 1 0 1 0 1.414-1.414L7.314 5.899z"/></svg>
-          </button>
-        </div>
-        <div class="flex justify-start gap-4 items-center border border-gray-100 rounded-lg p-3">
-          <svg class="flex-none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-2.5 -2.5 24 24">
-            <path fill="currentColor" d="M8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12m6.32-1.094l3.58 3.58a1 1 0 1 1-1.415 1.413l-3.58-3.58a8 8 0 1 1 1.414-1.414z"/></svg>
-          <input type="text" placeholder="Enter city name..." v-model="cityInput" class="flex-1 focus:outline-none" />
-          <button @click="searchCity" class="transition duration-150">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="-6 -6 24 24">
-              <path fill="currentColor" d="m7.314 5.9l3.535-3.536A1 1 0 1 0 9.435.95L5.899 4.485L2.364.95A1 1 0 1 0 .95 2.364l3.535 3.535L.95 9.435a1 1 0 1 0 1.414 1.414l3.535-3.535l3.536 3.535a1 1 0 1 0 1.414-1.414L7.314 5.899z"/></svg>
-          </button>
-        </div>
-      </div>
-      </div>
+          <div class="flex-1 overflow-y-auto">
+            <div v-if="searchedCities.length === 0" class="text-gray-500 text-sm">
+              No cities searched yet.
+            </div>
+            <ul class="space-y-2">
+              <li
+                @click="loadCity(c)"
+                v-for="(c, index) in searchedCities"
+                :key="index"
+                class="p-3 hover:bg-gray-500/40 hover:cursor-pointer hover:text-gray-200 transition ease-in-out duration-300 rounded"
+              >
+                <div class="flex flex-col text-sm">
+                  <h3 class="capitalize">{{ c.city }}</h3>
+                  <div v-if="c.weather" class="flex justify-start gap-2">
+                    <span>{{ Math.round(c.weather.main.temp) }}°C</span>
+                    <span>
+                      {{ c.weather.weather[0]?.description?.split(' ').slice(0, 2).join(' ').replace(/^\w/, (c) => c.toUpperCase()) }}
+                    </span>
+                  </div>
+                  <div v-else class="text-gray-400">Loading...</div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </aside>
+      </transition>
+      <transition name="slide-left" class="absolute top-0 left-0 w-80 h-full bg-gray-900 text-gray-300 z-50 p-8 flex flex-col">
+        <aside v-if="showSearchDrawer" class="absolute inset-0 p-8 flex flex-col gap-4">
+          <div class="flex-shrink-0 flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold">Add a new location</h2>
+            <button @click="closeSearchDrawer" aria-label="Close">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-1 -1 24 24">
+                <path
+                  fill="currentColor"
+                  d="m12 10.586l4.95-4.95l1.414 1.414L13.414 12l4.95 4.95l-1.414 1.414L12 13.414l-4.95 4.95l-1.414-1.414L10.586 12l-4.95-4.95L7.05 5.636z"
+                />
+              </svg>
+            </button>
+          </div>
+          <div class="flex justify-start gap-4 items-center border border-gray-100 rounded-lg p-3">
+            <svg class="flex-none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-2.5 -2.5 24 24">
+              <path fill="currentColor" d="M8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12m6.32-1.094l3.58 3.58a1 1 0 1 1-1.415 1.413l-3.58-3.58a8 8 0 1 1 1.414-1.414z"/></svg>
+            <input @keyup.enter="handleSearch" type="text" placeholder="Enter city name..." v-model="cityInput" class="flex-1 focus:outline-none" />
+          </div>
+        </aside>
+      </transition>
+    </div>
   </div>
 </template>
 
@@ -95,25 +138,34 @@ const { photo, loading, error, fetchPhoto } = useUnsplash() as {
 }
 
 // --- State ---
+const showDrawer = ref(false)
+const showSearchDrawer = ref(false)
 const localTime = ref('')
 const city = ref('Copenhagen')
+const searchedCities = ref<Array<{
+  city: string
+  weather: WeatherData | null
+  photo: UnsplashPhoto | null
+  timestamp: number
+}>>([])
 const weatherData = ref<any>(null)
 const currentTemp = ref<number | null>(null)
 const tempMin = ref<number | null>(null)
 const tempMax = ref<number | null>(null)
 const weatherMain = ref<string>('')
-const showCitySearch = ref(false)
+// const showCitySearch = ref(false)
 const cityInput = ref<string>('')
 const photoData = ref<UnsplashPhoto | null>(null)
 const CACHE_DURATION = 1000 * 60 * 60 * 3
 
 // --- UI handlers ---
-const openSearch = () => {
-  showCitySearch.value = true
+const toggleSearchDrawer = () => {
+  showSearchDrawer.value = !showSearchDrawer.value
   cityInput.value = ''
 }
-const closeSearch = () => {
-  showCitySearch.value = false
+const closeSearchDrawer = () => {
+  showSearchDrawer.value = !showSearchDrawer.value
+  cityInput.value = ''
 }
 
 // --- Helper: Load cached weather ---
@@ -137,6 +189,58 @@ const loadCachedWeather = (cityName: string) => {
     console.warn('Failed to parse cached weather:', e)
     return null
   }
+}
+// --- City search ---
+const searchCity = async () => {
+  const trimmedCity = cityInput.value.trim()
+  if (!trimmedCity) return
+
+  console.log('Searching for city:', trimmedCity)
+  city.value = trimmedCity
+  toggleSearchDrawer()
+
+  const exists = searchedCities.value.some(
+    (c) => c.city.toLowerCase() === trimmedCity.toLowerCase()
+  )
+  if (exists) {
+    return
+  }
+
+  try {
+    await Promise.all([fetchPhoto(trimmedCity), fetchWeather(trimmedCity)])
+
+    searchedCities.value.push({
+      city: trimmedCity,
+      weather: weatherData.value,
+      photo: photo.value,
+      timestamp: Date.now()
+    })
+
+    localStorage.setItem('searchedCities', JSON.stringify(searchedCities.value))
+  } catch (e) {
+    console.error('Error searching city:', e)
+  }
+}
+function handleSearch() {
+  if (!cityInput.value.trim()) return
+  searchCity()
+  cityInput.value = ''
+}
+// --- Drawer ---
+function toggleDrawer() {
+  showDrawer.value = !showDrawer.value
+}
+const loadCity = (selectedCity: typeof searchedCities.value[0]) => {
+  if (!selectedCity) return
+
+  city.value = selectedCity.city
+  weatherData.value = selectedCity.weather
+  photoData.value = selectedCity.photo
+
+  showDrawer.value = false
+
+  // fetchWeather(selectedCity.city)
+  fetchPhoto(selectedCity.city)
 }
 
 // --- Store weather details in refs & localStorage ---
@@ -173,22 +277,52 @@ const fetchWeather = async (cityName: string) => {
     weatherError.value = err
   }
 }
+async function fetchWeatherForCity(newCity: string) {
+  if (!newCity) return
 
-// --- City search ---
-const searchCity = async () => {
-  const trimmedCity = cityInput.value.trim()
-  if (!trimmedCity) return
+  city.value = newCity.trim()
+  // Check if the city already exists
+  const existing = searchedCities.value.find(
+    (c) => c.city.toLowerCase() === newCity.toLowerCase()
+  )
+  if (existing) return
 
-  console.log('Searching for city:', trimmedCity)
-  city.value = trimmedCity
+  // Add temporary entry while loading
+  searchedCities.value.push({
+    city: newCity,
+    weather: null,
+    photo: null,
+    timestamp: Date.now()
+  })
 
-  await Promise.all([
-    fetchPhoto(trimmedCity),
-    fetchWeather(trimmedCity)
-  ])
+  try {
+    // Fetch both weather and photo in parallel
+    const [{ data, error }, _] = await Promise.all([
+      useWeather(newCity),
+      fetchPhoto(newCity)
+    ])
 
-  localStorage.setItem('lastCity', trimmedCity)
-  closeSearch()
+    if (error.value) {
+      console.error(`Failed to fetch weather for ${newCity}`, error.value)
+      return
+    }
+
+    const weatherData = data.value as WeatherData
+    const index = searchedCities.value.findIndex(
+      (c) => c.city.toLowerCase() === newCity.toLowerCase()
+    )
+    if (index !== -1 && weatherData) {
+      searchedCities.value[index]!.weather = weatherData
+      searchedCities.value[index]!.photo = photo.value
+      searchedCities.value[index]!.timestamp = Date.now()
+      localStorage.setItem(
+        'searchedCities',
+        JSON.stringify(searchedCities.value)
+      )
+    }
+  } catch (err) {
+    console.error('Error fetching weather or photo:', err)
+  }
 }
 
 // --- Load from storage ---
@@ -266,16 +400,17 @@ onMounted(() => {
   const hasWeather = city.value && !!localStorage.getItem(`weather_${city.value}`)
   const hasCity = !!city.value
   if (!hasPhoto || !hasWeather || !hasCity) {
-    city.value = 'Copenhagen'
+    city.value = 'Miami'
     console.log('No local data found — fetching for Copenhagen')
-    fetchPhoto('Copenhagen')
-    fetchWeather('Copenhagen')
+    fetchPhoto('Miami')
+    fetchWeather('Miami')
   } else {
     console.log(`Loaded cached data for: ${city.value}`)
+    loadPhotoFromStorage()
+    loadWeatherFromStorage()
   }
   const timeInterval = setInterval(updateLocalTime, 60 * 1000)
-  loadPhotoFromStorage()
-  loadWeatherFromStorage()
+
   // Sync across tabs
   window.addEventListener('storage', (event) => {
     if (event.key === 'unsplashPhoto' && event.newValue) {
@@ -286,9 +421,38 @@ onMounted(() => {
       loadWeatherFromStorage()
     }
   })
+  const stored = localStorage.getItem('searchedCities')
+  if (stored) {
+    try {
+      searchedCities.value = JSON.parse(stored)
+    } catch (e) {
+      console.warn('Failed to parse searchedCities:', e)
+    }
+  }
   onUnmounted(() => {
     clearInterval(timeInterval)
     window.removeEventListener('storage', loadPhotoFromStorage)
   })
 })
 </script>
+<style>
+/* Drawer animations */
+.slide-left-enter-active,
+.slide-left-leave-active {
+  transition: transform 0.7s ease;
+}
+.slide-left-enter-from,
+.slide-left-leave-to {
+  transform: translateX(-100%);
+}
+
+/* Fade overlay */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.7s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
