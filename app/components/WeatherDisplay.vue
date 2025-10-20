@@ -7,7 +7,7 @@
             <Controls :city="city" @open-search="toggleSearchDrawer" @open-list="toggleDrawer" @city-selected="fetchWeatherForCity" />
             <div v-if="weatherData" class="absolute bottom-0 h-64 flex flex-col items-start text-white">
               <div class="flex justify-start items-center w-full gap-2">
-                <Icon name="wi:cloudy" class="size-8" />
+                <Icon :name="getWeatherIcon(weatherData.weather?.[0]?.id)" class="size-8" />
                 <span class="text-lg capitalize">{{ weatherMain || '' }}</span>
               </div>
               <div class="flex justify-start gap-2">
@@ -38,12 +38,12 @@
           <path fill="currentColor" d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25"/><circle cx="12" cy="2.5" r="1.5" fill="currentColor"><animateTransform attributeName="transform" dur="0.75s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"/></circle></svg>
       </div>
       <div v-if="error" class="absolute inset-0 bg-sky-950"></div>
-      <transition name="slideLeft">
+      <transition name="fade-in">
         <div v-if="showDrawer || showSearchDrawer" class="absolute inset-0 bg-slate-100/40 z-40" @click.self="toggleDrawer"></div>
       </transition>
-      <transition name="slide-left">
-        <aside v-if="showDrawer" class="absolute top-0 left-0 w-80 h-full bg-gray-900 text-gray-300 z-50 p-8 flex flex-col">
-          <div class="flex-shrink-0 flex justify-between items-center mb-4">
+      <transition name="fade-in">
+        <aside v-if="showDrawer" class="absolute top-0 left-0 w-full h-full bg-gray-900 text-gray-300 z-50 p-8 flex flex-col">
+          <div class="flex-shrink-0 flex justify-between items-center my-4">
             <h2 class="text-lg font-semibold">Locations</h2>
             <button @click="toggleDrawer" aria-label="Close">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-1 -1 24 24">
@@ -66,11 +66,12 @@
                 class="p-3 hover:bg-gray-500/40 hover:cursor-pointer hover:text-gray-200 transition ease-in-out duration-300 rounded"
               >
                 <div class="flex flex-col text-sm">
-                  <h3 class="capitalize">{{ c.city }}</h3>
-                  <div v-if="c.weather" class="flex justify-start gap-2">
+                  <h3 class="capitalize">{{ c.city }}, {{ c.weather?.sys.country }}</h3>
+                  <div v-if="c.weather" class="flex justify-start items-center gap-2">
                     <span>{{ Math.round(c.weather.main.temp) }}°C</span>
+                    <Icon :name="getWeatherIcon(c.weather?.weather?.[0]?.id)" class="w-8 h-8" />
                     <span>
-                      {{ c.weather.weather[0]?.description?.split(' ').slice(0, 2).join(' ').replace(/^\w/, (c) => c.toUpperCase()) }}
+                      {{ c.weather.weather[0]?.main }}
                     </span>
                   </div>
                   <div v-else class="text-gray-400">Loading...</div>
@@ -80,23 +81,18 @@
           </div>
         </aside>
       </transition>
-      <transition name="slide-left" class="absolute top-0 left-0 w-80 h-full bg-gray-900 text-gray-300 z-50 p-8 flex flex-col">
+      <transition name="fade-in" class="absolute top-0 left-0 w-full h-full bg-gray-900 text-gray-300 z-50 p-8 flex flex-col">
         <aside v-if="showSearchDrawer" class="absolute inset-0 p-8 flex flex-col gap-4">
-          <div class="flex-shrink-0 flex justify-between items-center mb-4">
+          <div class="flex-shrink-0 flex justify-between items-center my-4">
             <h2 class="text-lg font-semibold">Add a new location</h2>
             <button @click="closeSearchDrawer" aria-label="Close">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-1 -1 24 24">
-                <path
-                  fill="currentColor"
-                  d="m12 10.586l4.95-4.95l1.414 1.414L13.414 12l4.95 4.95l-1.414 1.414L12 13.414l-4.95 4.95l-1.414-1.414L10.586 12l-4.95-4.95L7.05 5.636z"
-                />
-              </svg>
+              <span>Cancel</span>
             </button>
           </div>
-          <div class="flex justify-start gap-4 items-center border border-gray-100 rounded-lg p-3">
+          <div class="flex justify-start gap-4 items-center bg-gray-600 text-gray-400 rounded-lg p-3">
             <svg class="flex-none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-2.5 -2.5 24 24">
               <path fill="currentColor" d="M8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12m6.32-1.094l3.58 3.58a1 1 0 1 1-1.415 1.413l-3.58-3.58a8 8 0 1 1 1.414-1.414z"/></svg>
-            <input @keyup.enter="handleSearch" type="text" placeholder="Enter city name..." v-model="cityInput" class="flex-1 focus:outline-none" />
+            <input @keyup.enter="handleSearch" type="text" placeholder="Enter city name..." v-model="cityInput" class="flex-1 focus:outline-none placeholder:text-gray-400" />
           </div>
         </aside>
       </transition>
@@ -124,9 +120,36 @@ interface UnsplashPhoto {
 interface WeatherData {
   name: string
   timezone: number
-  weather: { id: number; description: string }[]
+  sys: { country: string }
+  weather: { id: number; description: string; main: string }[]
   main: { temp: number; temp_min: number; temp_max: number }
 }
+function getWeatherIcon(id?: number): string {
+  if (id == null) return 'ph:question'
+  if (id >= 200 && id < 300) return 'wi:storm-showers'
+  if (id >= 300 && id < 400) return 'wi:sprinkle'
+  if (id >= 500 && id < 600) return 'wi:rain'
+  if (id >= 600 && id < 700) return 'wi:snow'
+  if (id === 701) return 'wi:strong-wind'
+  if (id === 711) return 'wi:smoke'
+  if (id === 721) return 'wi:fog'
+  if (id === 731 || id === 761) return 'wi:strong-wind'
+  if (id === 741) return 'wi:fog'
+  if (id === 751) return 'wi:strong-wind'
+  if (id === 762) return 'wi:smoke'
+  if (id === 771) return 'wi:strong-wind'
+  if (id === 781) return 'wi:tornado'
+  if (id === 800) return 'wi:day-sunny'
+  if (id > 800 && id < 805) return 'wi:cloudy'
+
+  return 'ph:question'
+}
+const weatherMain = ref<string>('Rain')
+// const weatherId = ref<number>(800)
+const forecastIcon = computed(() => {
+  const id = weatherData.value?.weather?.[0]?.id
+  return id ? getWeatherIcon(id) : 'ph:question'
+})
 
 // --- Composables ---
 const weatherError = ref<any>(null)
@@ -141,7 +164,7 @@ const { photo, loading, error, fetchPhoto } = useUnsplash() as {
 const showDrawer = ref(false)
 const showSearchDrawer = ref(false)
 const localTime = ref('')
-const city = ref('Copenhagen')
+const city = ref('Miami')
 const searchedCities = ref<Array<{
   city: string
   weather: WeatherData | null
@@ -152,8 +175,6 @@ const weatherData = ref<any>(null)
 const currentTemp = ref<number | null>(null)
 const tempMin = ref<number | null>(null)
 const tempMax = ref<number | null>(null)
-const weatherMain = ref<string>('')
-// const showCitySearch = ref(false)
 const cityInput = ref<string>('')
 const photoData = ref<UnsplashPhoto | null>(null)
 const CACHE_DURATION = 1000 * 60 * 60 * 3
@@ -242,7 +263,6 @@ const loadCity = (selectedCity: typeof searchedCities.value[0]) => {
   // fetchWeather(selectedCity.city)
   fetchPhoto(selectedCity.city)
 }
-
 // --- Store weather details in refs & localStorage ---
 const setWeatherRefs = (data: WeatherData) => {
   weatherData.value = data
@@ -334,7 +354,7 @@ const loadPhotoFromStorage = () => {
     const parsed = JSON.parse(stored)
     if (parsed?.photo?.urls?.regular) {
       photoData.value = parsed.photo
-      city.value = parsed.city || 'Copenhagen'
+      city.value = parsed.city
       console.log('Loaded from localStorage:', city.value)
     }
   } catch (e) {
@@ -360,6 +380,37 @@ const updateLocalTime = () => {
   const hours = String(now.getHours()).padStart(2, '0')
   const minutes = String(now.getMinutes()).padStart(2, '0')
   localTime.value = hours + ':' + minutes
+}
+
+// --- utility to check localStorage values are really valid ---
+function hasValidLocalItem(key: string): boolean {
+  const raw = localStorage.getItem(key)
+  if (raw == null) return false
+
+  const trimmed = raw.trim()
+  if (trimmed === '' || trimmed.toLowerCase() === 'null' || trimmed.toLowerCase() === 'undefined') return false
+
+  try {
+    JSON.parse(trimmed)
+    return true
+  } catch {
+    // if parsing fails it's still possibly a plain string — consider it valid
+    return true
+  }
+}
+
+// named storage handler so we can remove it later
+function handleStorageEvent(event: StorageEvent) {
+  if (!event.key) return
+  if (event.key === 'unsplashPhoto' && event.newValue) {
+    console.log('storage event: unsplashPhoto updated')
+    loadPhotoFromStorage()
+    loadWeatherFromStorage()
+  }
+  if (event.key.startsWith('weather_') && event.newValue) {
+    console.log('storage event: weather_* updated')
+    loadWeatherFromStorage()
+  }
 }
 
 // --- Watchers ---
@@ -396,14 +447,23 @@ onMounted(() => {
   loadWeatherFromStorage()
   updateLocalTime()
 
-  const hasPhoto = !!localStorage.getItem('unsplashPhoto')
-  const hasWeather = city.value && !!localStorage.getItem(`weather_${city.value}`)
-  const hasCity = !!city.value
+  let currentCity = localStorage.getItem('currentCity')?.trim() || ''
+  const defaultCity = 'Miami'
+
+  const hasPhoto = hasValidLocalItem('unsplashPhoto')
+  const hasWeather = currentCity ? hasValidLocalItem(`weather_${currentCity}`) : false
+  const hasCity = !!currentCity
+
+  console.log({ hasPhoto, hasWeather, hasCity, currentCity })
+
   if (!hasPhoto || !hasWeather || !hasCity) {
-    city.value = 'Miami'
-    console.log('No local data found — fetching for Copenhagen')
-    fetchPhoto('Miami')
-    fetchWeather('Miami')
+    currentCity = defaultCity
+    city.value = currentCity
+    console.log('No local data found — fetching for', city.value)
+    localStorage.setItem('currentCity', currentCity)
+
+    fetchPhoto(currentCity)
+    fetchWeather(currentCity)
   } else {
     console.log(`Loaded cached data for: ${city.value}`)
     loadPhotoFromStorage()
@@ -412,15 +472,8 @@ onMounted(() => {
   const timeInterval = setInterval(updateLocalTime, 60 * 1000)
 
   // Sync across tabs
-  window.addEventListener('storage', (event) => {
-    if (event.key === 'unsplashPhoto' && event.newValue) {
-      loadPhotoFromStorage()
-      loadWeatherFromStorage()
-    }
-    if (event.key?.startsWith('weather_') && event.newValue) {
-      loadWeatherFromStorage()
-    }
-  })
+  window.addEventListener('storage', handleStorageEvent)
+
   const stored = localStorage.getItem('searchedCities')
   if (stored) {
     try {
@@ -431,12 +484,12 @@ onMounted(() => {
   }
   onUnmounted(() => {
     clearInterval(timeInterval)
-    window.removeEventListener('storage', loadPhotoFromStorage)
+    window.removeEventListener('storage', handleStorageEvent)
   })
 })
 </script>
 <style>
-/* Drawer animations */
+/* Slide left transition */
 .slide-left-enter-active,
 .slide-left-leave-active {
   transition: transform 0.7s ease;

@@ -1,10 +1,9 @@
 import { ref, onMounted, watchEffect } from 'vue'
 
 export const useUnsplash = () => {
-  const DEFAULT_CITY = "Copenhagen"
 
   const photo = ref<any>(null)
-  const city = ref<string>(DEFAULT_CITY)
+  const city = ref<string>('')
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -43,7 +42,6 @@ export const useUnsplash = () => {
     }
   }
 
-  // Load from localStorage on mount
   onMounted(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('unsplashPhoto')
@@ -51,14 +49,13 @@ export const useUnsplash = () => {
         try {
           const parsed = JSON.parse(stored)
           photo.value = parsed.photo
-          city.value = parsed.city || DEFAULT_CITY
+          city.value = parsed.city || ''
           return
         } catch (e) {
           console.warn('Failed to parse stored Unsplash photo', e)
         }
       }
     }
-    fetchPhoto(DEFAULT_CITY)
   })
 
   // 🔹 Keep localStorage up-to-date whenever city or photo changes
