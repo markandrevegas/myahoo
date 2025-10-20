@@ -7,3 +7,13 @@
     @apply bg-transparent text-white focus:border-0 focus:outline-0;
   }
 }
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Edge */
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE, Edge */
+    scrollbar-width: none;    /* Firefox */
+  }
+}

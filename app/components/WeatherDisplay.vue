@@ -54,19 +54,17 @@
               </svg>
             </button>
           </div>
-          <div class="flex-1 overflow-y-auto">
+          <div class="flex-1 overflow-y-auto no-scrollbar">
             <div v-if="searchedCities.length === 0" class="text-gray-500 text-sm">
               No cities searched yet.
             </div>
             <ul class="space-y-2">
-              <li
-                @click="loadCity(c)"
-                v-for="(c, index) in searchedCities"
-                :key="index"
-                class="p-3 hover:bg-gray-500/40 hover:cursor-pointer hover:text-gray-200 transition ease-in-out duration-300 rounded"
-              >
+              <li @click="loadCity(c)" v-for="(c, index) in searchedCities" :key="index" class="p-3 hover:cursor-pointer hover:text-gray-200 transition ease-in-out duration-300 rounded">
                 <div class="flex flex-col text-sm">
-                  <h3 class="capitalize">{{ c.city }}, {{ c.weather?.sys.country }}</h3>
+                  <div class="w-full flex justify-between items-center">
+                    <h3 class="capitalize">{{ c.city }}, {{ c.weather?.sys.country }}</h3>
+                    <Icon @click-stop="removeCity(index)" name="jam:bookmark-remove" class="size-4 text-gray-500 hover:text-gray-200" />
+                  </div>
                   <div v-if="c.weather" class="flex justify-start items-center gap-2">
                     <span>{{ Math.round(c.weather.main.temp) }}°C</span>
                     <Icon :name="getWeatherIcon(c.weather?.weather?.[0]?.id)" class="w-8 h-8" />
@@ -145,11 +143,6 @@ function getWeatherIcon(id?: number): string {
   return 'ph:question'
 }
 const weatherMain = ref<string>('Rain')
-// const weatherId = ref<number>(800)
-const forecastIcon = computed(() => {
-  const id = weatherData.value?.weather?.[0]?.id
-  return id ? getWeatherIcon(id) : 'ph:question'
-})
 
 // --- Composables ---
 const weatherError = ref<any>(null)
@@ -246,6 +239,14 @@ function handleSearch() {
   if (!cityInput.value.trim()) return
   searchCity()
   cityInput.value = ''
+}
+function saveSearchedCities() {
+  localStorage.setItem('searchedCities', JSON.stringify(searchedCities.value))
+}
+function removeCity(index: number) {
+  searchedCities.value.splice(index, 1)
+  // persist changes
+  saveSearchedCities()
 }
 // --- Drawer ---
 function toggleDrawer() {
