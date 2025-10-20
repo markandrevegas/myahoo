@@ -38,10 +38,10 @@
           <path fill="currentColor" d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25"/><circle cx="12" cy="2.5" r="1.5" fill="currentColor"><animateTransform attributeName="transform" dur="0.75s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"/></circle></svg>
       </div>
       <div v-if="error" class="absolute inset-0 bg-sky-950"></div>
-      <transition name="fade-in">
+      <transition name="fade">
         <div v-if="showDrawer || showSearchDrawer" class="absolute inset-0 bg-slate-100/40 z-40" @click.self="toggleDrawer"></div>
       </transition>
-      <transition name="fade-in">
+      <transition name="fade">
         <aside v-if="showDrawer" class="absolute top-0 left-0 w-full h-full bg-gray-900 text-gray-300 z-50 p-8 flex flex-col">
           <div class="flex-shrink-0 flex justify-between items-center my-4">
             <h2 class="text-lg font-semibold">Locations</h2>
@@ -81,7 +81,7 @@
           </div>
         </aside>
       </transition>
-      <transition name="fade-in" class="absolute top-0 left-0 w-full h-full bg-gray-900 text-gray-300 z-50 p-8 flex flex-col">
+      <transition name="fade" class="absolute top-0 left-0 w-full h-full bg-gray-900 text-gray-300 z-50 p-8 flex flex-col">
         <aside v-if="showSearchDrawer" class="absolute inset-0 p-8 flex flex-col gap-4">
           <div class="flex-shrink-0 flex justify-between items-center my-4">
             <h2 class="text-lg font-semibold">Add a new location</h2>
@@ -492,7 +492,7 @@ onMounted(() => {
 /* Slide left transition */
 .slide-left-enter-active,
 .slide-left-leave-active {
-  transition: transform 0.7s ease;
+  transition: transform 0.6s ease;
 }
 .slide-left-enter-from,
 .slide-left-leave-to {
@@ -502,7 +502,7 @@ onMounted(() => {
 /* Fade overlay */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.7s ease;
+  transition: opacity 0.6s ease;
 }
 .fade-enter-from,
 .fade-leave-to {
