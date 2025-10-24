@@ -3,13 +3,12 @@ import { $fetch } from 'ofetch'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
-  const city = Array.isArray(query.city) ? query.city[0] : query.city
+  let city = Array.isArray(query.city) ? query.city[0] : query.city
 
+  // Default to Miami if no city is provided
   if (!city) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'City parameter is required',
-    })
+    city = 'Miami'
+    console.log('no city using default:', city)
   }
 
   const accessKey = process.env.UNSPLASH_ACCESS_KEY
@@ -36,6 +35,7 @@ export default defineEventHandler(async (event) => {
         })
       }
       data = fallback
+      console.log(data)
     }
     return data
   } catch (error) {

@@ -443,14 +443,13 @@ watch(photo, (newPhoto) => {
 )
 
 // --- Lifecycle ---
-onMounted(() => {
+onMounted(async () => {
   loadPhotoFromStorage()
   loadWeatherFromStorage()
   updateLocalTime()
 
-  let currentCity = localStorage.getItem('currentCity')?.trim() || ''
   const defaultCity = 'Miami'
-
+  let currentCity = localStorage.getItem('currentCity')?.trim() || ''
   const hasPhoto = hasValidLocalItem('unsplashPhoto')
   const hasWeather = currentCity ? hasValidLocalItem(`weather_${currentCity}`) : false
   const hasCity = !!currentCity
@@ -460,19 +459,20 @@ onMounted(() => {
   if (!hasPhoto || !hasWeather || !hasCity) {
     currentCity = defaultCity
     city.value = currentCity
-    console.log('No local data found — fetching for', city.value)
-    localStorage.setItem('currentCity', currentCity)
+    console.log('First-time load — fetching for', city.value)
 
-    fetchPhoto(currentCity)
-    fetchWeather(currentCity)
+    localStorage.setItem('currentCity', currentCity)
+    // Wait for both photo + weather to resolve before continuing
+    await Promise.all([
+      fetchPhoto(defaultCity),
+      fetchWeather(defaultCity)
+    ])
   } else {
     console.log(`Loaded cached data for: ${city.value}`)
     loadPhotoFromStorage()
     loadWeatherFromStorage()
   }
   const timeInterval = setInterval(updateLocalTime, 60 * 1000)
-
-  // Sync across tabs
   window.addEventListener('storage', handleStorageEvent)
 
   const stored = localStorage.getItem('searchedCities')
