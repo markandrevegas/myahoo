@@ -215,7 +215,7 @@ const selectCity = async (s: { name: string; country: string }) => {
   query.value = s.name
   suggestions.value = []
 
-  await handleSearch(s.name)
+  await searchCity(s.name)
 }
 // --- UI handlers ---
 const toggleSearchDrawer = () => {
@@ -249,8 +249,8 @@ const loadCachedWeather = (cityName: string) => {
   }
 }
 // --- City search ---
-const searchCity = async () => {
-  const trimmedCity = cityInput.value.trim()
+const searchCity = async (cityName: string) => {
+  const trimmedCity = cityName.trim()
   if (!trimmedCity) return
 
   console.log('Searching for city:', trimmedCity)
@@ -275,6 +275,8 @@ const searchCity = async () => {
     })
 
     localStorage.setItem('searchedCities', JSON.stringify(searchedCities.value))
+    cityInput.value = ''
+    query.value = ''
   } catch (e) {
     console.error('Error searching city:', e)
   }
@@ -308,11 +310,6 @@ const handleSearch = async (inputCity?: string) => {
   })
   localStorage.setItem('searchedCities', JSON.stringify(searchedCities.value))
 }
-/* function handleSearch() {
-  if (!cityInput.value.trim()) return
-  searchCity()
-  cityInput.value = ''
-} */
 function saveSearchedCities() {
   localStorage.setItem('searchedCities', JSON.stringify(searchedCities.value))
 }
