@@ -105,16 +105,7 @@ import { useUnsplash } from '~/composables/useUnsplash'
 import { useWeather } from '~/composables/useWeather'
 
 useHead({
-  title: () => (city.value ? `${city.value} Weather` : 'Home'),
-  meta: [
-    {
-      name: 'description',
-      content: () =>
-        city.value
-          ? `Current weather information for ${city.value}.`
-          : 'A Nuxt 4, Tailwind 3, and Bun project.'
-    }
-  ]
+  title: 'Home'
 })
 // --- Interfaces ---
 interface UnsplashPhoto {
