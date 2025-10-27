@@ -32,10 +32,6 @@ This app requires **Unsplash** API keys to fetch the images based on city search
 Create a `.env` file in the root of your project and add:
 
 ```env
-# Spotify API
-SPOTIFY_CLIENT_ID=your_spotify_client_id
-SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
-
 # Unsplash API
 UNSPLASH_ACCESS_KEY=your_unsplash_access_key
 ```
