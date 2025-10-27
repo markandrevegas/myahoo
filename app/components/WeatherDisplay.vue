@@ -99,15 +99,23 @@
 </template>
 
 <script setup lang="ts">
-useHead({
-  title: 'Home'
-})
-
 import { ref } from 'vue'
+import { useHead } from '#app'
 import { useUnsplash } from '~/composables/useUnsplash'
 import { useWeather } from '~/composables/useWeather'
 
-
+useHead({
+  title: () => (city.value ? `${city.value} Weather` : 'Home'),
+  meta: [
+    {
+      name: 'description',
+      content: () =>
+        city.value
+          ? `Current weather information for ${city.value}.`
+          : 'A Nuxt 4, Tailwind 3, and Bun project.'
+    }
+  ]
+})
 // --- Interfaces ---
 interface UnsplashPhoto {
   id: string
@@ -157,7 +165,7 @@ const { photo, loading, error, fetchPhoto } = useUnsplash() as {
 const showDrawer = ref(false)
 const showSearchDrawer = ref(false)
 const localTime = ref('')
-const city = ref('Miami')
+const city = ref('')
 const staticCity = ref('New Delhi')
 const searchedCities = ref<Array<{
   city: string
