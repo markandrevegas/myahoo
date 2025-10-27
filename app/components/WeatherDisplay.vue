@@ -59,11 +59,11 @@
               No cities searched yet.
             </div>
             <ul class="space-y-2">
-              <li @click="loadCity(c)" v-for="(c, index) in searchedCities" :key="index" class="p-3 hover:cursor-pointer hover:text-gray-200 transition ease-in-out duration-300 rounded">
+              <li v-for="(c, index) in searchedCities" :key="index" class="p-3 hover:cursor-pointer hover:text-gray-200 transition ease-in-out duration-300 rounded">
                 <div class="flex flex-col text-sm">
                   <div class="w-full flex justify-between items-center">
-                    <h3 class="capitalize">{{ c.city }}, {{ c.weather?.sys.country }}</h3>
-                    <Icon @click-stop="removeCity(index)" name="jam:bookmark-remove" class="size-4 text-gray-500 hover:text-gray-200" />
+                    <h3 @click="loadCity(c)" class="capitalize">{{ c.city }}, {{ c.weather?.sys.country }}</h3>
+                    <Icon @click="removeCity(index)" name="jam:bookmark-remove" class="size-4 text-gray-500 hover:text-gray-200" />
                   </div>
                   <div v-if="c.weather" class="flex justify-start items-center gap-2">
                     <span>{{ Math.round(c.weather.main.temp) }}°C</span>
