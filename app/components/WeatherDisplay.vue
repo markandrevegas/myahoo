@@ -87,10 +87,24 @@
               <span>Cancel</span>
             </button>
           </div>
-          <div class="flex justify-start gap-4 items-center bg-gray-600 text-gray-400 rounded-lg p-3">
-            <svg class="flex-none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-2.5 -2.5 24 24">
+          <div class="flex flex-col justify-center items-center bg-gray-600 text-gray-400 rounded-lg p-3">
+            <div class="w-full flex justify-start gap-4">
+              <svg class="flex-none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-2.5 -2.5 24 24">
               <path fill="currentColor" d="M8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12m6.32-1.094l3.58 3.58a1 1 0 1 1-1.415 1.413l-3.58-3.58a8 8 0 1 1 1.414-1.414z"/></svg>
-            <input @keyup.enter="handleSearch" type="text" placeholder="Enter city name..." v-model="cityInput" class="flex-1 focus:outline-none placeholder:text-gray-400" />
+              <input @keyup.enter="() => handleSearch()" type="text" placeholder="Enter city name..." v-model="query" class="flex-1 focus:outline-none placeholder:text-gray-400" />
+            </div>
+            <div class="flex-1 w-full">
+              <!-- Autocomplete dropdown -->
+              <ul v-if="suggestions.length > 0" class="w-full flex flex-col bg-gray-700 text-gray-200 mt-1 rounded shadow max-h-48 overflow-auto">
+                <li v-for="(s, index) in suggestions" :key="index"
+                  @click="selectCity(s)"
+                  class="px-3 py-2 hover:bg-gray-600 cursor-pointer"
+                >
+                  {{ s.name }}, {{ s.country }}
+                </li>
+              </ul>
+            </div>
+
           </div>
         </aside>
       </transition>
@@ -157,6 +171,7 @@ const showDrawer = ref(false)
 const showSearchDrawer = ref(false)
 const localTime = ref('')
 const city = ref('')
+const query = ref('')
 const staticCity = ref('New Delhi')
 const searchedCities = ref<Array<{
   city: string
@@ -169,9 +184,39 @@ const currentTemp = ref<number | null>(null)
 const tempMin = ref<number | null>(null)
 const tempMax = ref<number | null>(null)
 const cityInput = ref<string>('')
+const suggestions = ref<{ name: string; country: string }[]>([])
 const photoData = ref<UnsplashPhoto | null>(null)
 const CACHE_DURATION = 1000 * 60 * 60 * 3
 
+
+// --- Fetch city suggestions from OpenWeather ---
+watch(query, async (val) => {
+  if (!val || val.length < 2) {
+    suggestions.value = []
+    return
+  }
+
+  try {
+    const config = useRuntimeConfig()
+    const apiKey = config.public.openWeatherApiKey
+    const res = await fetch(
+      `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(val)}&limit=5&appid=${apiKey}`
+    )
+    const data = await res.json()
+    suggestions.value = data.map((c: any) => ({ name: c.name, country: c.country }))
+    console.log(suggestions.value)
+  } catch (err) {
+    suggestions.value = []
+  }
+})
+
+// --- Called when user selects a suggestion ---
+const selectCity = async (s: { name: string; country: string }) => {
+  query.value = s.name
+  suggestions.value = []
+
+  await handleSearch(s.name)
+}
 // --- UI handlers ---
 const toggleSearchDrawer = () => {
   showSearchDrawer.value = !showSearchDrawer.value
@@ -234,11 +279,40 @@ const searchCity = async () => {
     console.error('Error searching city:', e)
   }
 }
-function handleSearch() {
+// --- Search / fetch weather and photo ---
+const handleSearch = async (inputCity?: string) => {
+  const cityName = inputCity || query.value.trim()
+  if (!cityName) return
+
+  // Prevent duplicates
+  const exists = searchedCities.value.some((c) => c.city.toLowerCase() === cityName.toLowerCase())
+  if (exists) return
+
+  // Fetch weather (with built-in validation)
+  const { data, error } = await useWeather(cityName)
+  if (error) {
+    alert(error.message)
+    return
+  }
+  weatherData.value = data
+
+  // Fetch photo (your existing function)
+  await fetchPhoto(cityName)
+
+  // Add to searched cities
+  searchedCities.value.push({
+    city: cityName,
+    weather: weatherData.value,
+    photo: photo.value,
+    timestamp: Date.now()
+  })
+  localStorage.setItem('searchedCities', JSON.stringify(searchedCities.value))
+}
+/* function handleSearch() {
   if (!cityInput.value.trim()) return
   searchCity()
   cityInput.value = ''
-}
+} */
 function saveSearchedCities() {
   localStorage.setItem('searchedCities', JSON.stringify(searchedCities.value))
 }
