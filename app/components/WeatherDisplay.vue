@@ -158,6 +158,7 @@ const showDrawer = ref(false)
 const showSearchDrawer = ref(false)
 const localTime = ref('')
 const city = ref('Miami')
+const staticCity = ref('New Delhi')
 const searchedCities = ref<Array<{
   city: string
   weather: WeatherData | null
@@ -190,7 +191,6 @@ const loadCachedWeather = (cityName: string) => {
   try {
     const parsed = JSON.parse(stored)
     const now = Date.now()
-
     // if cache is still valid (under 3 hours old)
     if (now - parsed.timestamp < CACHE_DURATION) {
       console.log('Loaded cached weather for', cityName)
@@ -260,8 +260,6 @@ const loadCity = (selectedCity: typeof searchedCities.value[0]) => {
   photoData.value = selectedCity.photo
 
   showDrawer.value = false
-
-  // fetchWeather(selectedCity.city)
   fetchPhoto(selectedCity.city)
 }
 // --- Store weather details in refs & localStorage ---
@@ -273,7 +271,7 @@ const setWeatherRefs = (data: WeatherData) => {
   weatherMain.value = weatherData.value.weather?.[0]?.main || ''
 
   localStorage.setItem(
-    `weather_${city.value}`,
+    'weather_' + city.value,
     JSON.stringify({
       data,
       timestamp: Date.now(),
@@ -291,8 +289,11 @@ const fetchWeather = async (cityName: string) => {
 
   try {
     const { data, error } = await useWeather(cityName)
-    if (error.value) throw new Error(error.value.message || 'Failed to fetch weather')
-    if (data.value) setWeatherRefs(data.value as WeatherData)
+    if (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      throw new Error(message || 'Failed to fetch weather')
+    }
+    if (data) setWeatherRefs(data as WeatherData)
   } catch (err) {
     console.error('Weather error:', err)
     weatherError.value = err
@@ -302,7 +303,6 @@ async function fetchWeatherForCity(newCity: string) {
   if (!newCity) return
 
   city.value = newCity.trim()
-  // Check if the city already exists
   const existing = searchedCities.value.find(
     (c) => c.city.toLowerCase() === newCity.toLowerCase()
   )
@@ -317,18 +317,16 @@ async function fetchWeatherForCity(newCity: string) {
   })
 
   try {
-    // Fetch both weather and photo in parallel
     const [{ data, error }, _] = await Promise.all([
       useWeather(newCity),
       fetchPhoto(newCity)
     ])
-
-    if (error.value) {
-      console.error(`Failed to fetch weather for ${newCity}`, error.value)
-      return
+    if (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      throw new Error(message || 'Failed to fetch weather')
     }
 
-    const weatherData = data.value as WeatherData
+    const weatherData = data as WeatherData
     const index = searchedCities.value.findIndex(
       (c) => c.city.toLowerCase() === newCity.toLowerCase()
     )
@@ -395,7 +393,6 @@ function hasValidLocalItem(key: string): boolean {
     JSON.parse(trimmed)
     return true
   } catch {
-    // if parsing fails it's still possibly a plain string — consider it valid
     return true
   }
 }
@@ -443,54 +440,41 @@ watch(photo, (newPhoto) => {
 )
 
 // --- Lifecycle ---
-onMounted(async () => {
-  loadPhotoFromStorage()
-  loadWeatherFromStorage()
-  updateLocalTime()
-
-  const defaultCity = 'Miami'
-  let currentCity = localStorage.getItem('currentCity')?.trim() || ''
-  const hasPhoto = hasValidLocalItem('unsplashPhoto')
-  const hasWeather = currentCity ? hasValidLocalItem(`weather_${currentCity}`) : false
-  const hasCity = !!currentCity
-
-  console.log({ hasPhoto, hasWeather, hasCity, currentCity })
-
-  if (!hasPhoto || !hasWeather || !hasCity) {
-    currentCity = defaultCity
-    city.value = currentCity
-    console.log('First-time load — fetching for', city.value)
-
-    localStorage.setItem('currentCity', currentCity)
-    // Wait for both photo + weather to resolve before continuing
-    await Promise.all([
-      fetchPhoto(defaultCity),
-      fetchWeather(defaultCity)
-    ])
-  } else {
-    console.log(`Loaded cached data for: ${city.value}`)
-    loadPhotoFromStorage()
-    loadWeatherFromStorage()
-  }
+onMounted(() => {
   const timeInterval = setInterval(updateLocalTime, 60 * 1000)
   window.addEventListener('storage', handleStorageEvent)
-
-  const stored = localStorage.getItem('searchedCities')
-  if (stored) {
-    try {
-      searchedCities.value = JSON.parse(stored)
-    } catch (e) {
-      console.warn('Failed to parse searchedCities:', e)
-    }
-  }
   onUnmounted(() => {
     clearInterval(timeInterval)
     window.removeEventListener('storage', handleStorageEvent)
-  })
+  });
+
+  ;(async () => {
+    updateLocalTime()
+    let currentCity = localStorage.getItem('currentCity')?.trim() || ''
+
+    if (!currentCity) {
+      currentCity = staticCity.value
+      localStorage.setItem('currentCity', currentCity)
+    }
+
+    city.value = currentCity
+
+    const hasPhoto = hasValidLocalItem('unsplashPhoto')
+    const hasWeather = hasValidLocalItem('weather_' + currentCity)
+
+    if (!hasPhoto || !hasWeather) {
+      await Promise.all([
+        fetchPhoto(currentCity),
+        fetchWeather(currentCity)
+      ])
+    } else {
+      loadPhotoFromStorage()
+      loadWeatherFromStorage()
+    }
+  })()
 })
 </script>
 <style>
-/* Slide left transition */
 .slide-left-enter-active,
 .slide-left-leave-active {
   transition: transform 0.6s ease;
@@ -499,8 +483,6 @@ onMounted(async () => {
 .slide-left-leave-to {
   transform: translateX(-100%);
 }
-
-/* Fade overlay */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.6s ease;

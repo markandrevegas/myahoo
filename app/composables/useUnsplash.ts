@@ -1,8 +1,18 @@
 import { ref, onMounted, watchEffect } from 'vue'
 
-export const useUnsplash = () => {
+interface UnsplashPhoto {
+  id: string
+  urls: {
+    regular: string
+    small: string
+    thumb: string
+  }
+  alt_description?: string
+  [key: string]: any
+}
 
-  const photo = ref<any>(null)
+export const useUnsplash = () => {
+  const photo = ref<UnsplashPhoto | null>(null)
   const city = ref<string>('')
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -17,48 +27,48 @@ export const useUnsplash = () => {
     error.value = null
 
     try {
-      const { data, error: fetchError } = await useFetch(`/api/unsplash`, {
+      const data: UnsplashPhoto = await $fetch(`/api/unsplash`, {
         query: { city: queryCity },
       })
 
-      if (fetchError.value) throw fetchError.value
-
-      photo.value = data.value
+      photo.value = data
       city.value = queryCity
 
       // persist in localStorage
-      if (typeof window !== 'undefined' && photo.value?.urls?.regular) {
-        localStorage.setItem('unsplashPhoto', JSON.stringify({
-          city: city.value,
-          photo: photo.value,
-          timestamp: Date.now()
-        }))
+      if (typeof window !== 'undefined' && data?.urls?.regular) {
+        localStorage.setItem(
+          'unsplashPhoto',
+          JSON.stringify({
+            city: city.value,
+            photo: data,
+            timestamp: Date.now(),
+          })
+        )
       }
-
-    } catch (err: any) {
-      error.value = err?.message || 'Failed to load photo.'
+    } catch (err: unknown) {
+      error.value =
+        err instanceof Error ? err.message : 'Failed to load photo.'
+      console.error('Unsplash fetch error:', err)
     } finally {
       loading.value = false
     }
   }
 
   onMounted(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('unsplashPhoto')
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored)
-          photo.value = parsed.photo
-          city.value = parsed.city || ''
-          return
-        } catch (e) {
-          console.warn('Failed to parse stored Unsplash photo', e)
-        }
-      }
+    if (typeof window === 'undefined') return
+
+    const stored = localStorage.getItem('unsplashPhoto')
+    if (!stored) return
+
+    try {
+      const parsed = JSON.parse(stored)
+      photo.value = parsed.photo
+      city.value = parsed.city || ''
+    } catch (e) {
+      console.warn('Failed to parse stored Unsplash photo', e)
     }
   })
 
-  // 🔹 Keep localStorage up-to-date whenever city or photo changes
   watchEffect(() => {
     if (typeof window !== 'undefined' && photo.value && city.value) {
       localStorage.setItem(
