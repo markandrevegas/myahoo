@@ -1,6 +1,6 @@
 <template>
   <div class="flex justify-center items-center h-screen bg-gray-100">
-    <div class="relative rounded-[40px] overflow-auto shadow-lg bg-white h-[810px] w-[430px]">
+    <div class="relative rounded-[40px] overflow-auto shadow-lg bg-white w-full h-full">
       <div class="relative h-full w-full overflow-hidden">
         <div class="relative z-30 w-full h-full flex flex-col justify-between">
           <div class="relative z-20 h-full w-full p-8">
@@ -39,10 +39,10 @@
       </div>
 
       <div v-if="error" class="absolute inset-0 bg-sky-950"></div>
-      <transition name="fade">
+      <transition name="slide-left">
         <div v-if="showDrawer || showSearchDrawer" class="absolute inset-0 bg-slate-100/40 z-40" @click.self="toggleDrawer"></div>
       </transition>
-      <transition name="fade">
+      <transition name="slide-left">
         <aside v-if="showDrawer" class="absolute top-0 left-0 w-full h-full bg-gray-900 text-gray-300 z-50 p-8 flex flex-col">
           <div class="flex-shrink-0 flex justify-between items-center my-4">
             <h2 class="text-lg font-semibold">Locations</h2>
@@ -80,7 +80,7 @@
           </div>
         </aside>
       </transition>
-      <transition name="fade" class="absolute top-0 left-0 w-full h-full bg-gray-900 text-gray-300 z-50 p-8 flex flex-col">
+      <transition name="slide-left" class="absolute top-0 left-0 w-full h-full bg-gray-900 text-gray-300 z-50 p-8 flex flex-col">
         <aside v-if="showSearchDrawer" class="absolute inset-0 p-8 flex flex-col gap-4">
           <div class="flex-shrink-0 flex justify-between items-center my-4">
             <h2 class="text-lg font-semibold">Add a new location</h2>
@@ -564,21 +564,3 @@ onMounted(() => {
   })()
 })
 </script>
-<style>
-.slide-left-enter-active,
-.slide-left-leave-active {
-  transition: transform 0.6s ease;
-}
-.slide-left-enter-from,
-.slide-left-leave-to {
-  transform: translateX(-100%);
-}
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.6s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>
