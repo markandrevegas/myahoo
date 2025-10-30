@@ -1,23 +1,23 @@
 <template>
-  <div class="flex justify-center items-center h-screen bg-gray-100">
-    <div class="relative rounded-[40px] overflow-auto shadow-lg bg-white w-full h-full">
+  <div class="w-full flex justify-center items-center h-screen bg-gray-100 py-8">
+    <div class="relative rounded-[14px] overflow-auto shadow-lg bg-white w-full max-w-[440px] h-full max-h-[926px]">
       <div class="relative h-full w-full overflow-hidden">
         <div class="relative z-30 w-full h-full flex flex-col justify-between">
           <div class="relative z-20 h-full w-full p-8">
             <Controls :city="city" @open-search="toggleSearchDrawer" @open-list="toggleDrawer" @city-selected="fetchWeatherForCity" />
-            <div v-if="weatherData" class="absolute bottom-0 h-64 flex flex-col items-start text-white">
+            <div v-if="weatherData" class="absolute bottom-0 h-[18rem] max-h-[24rem] flex flex-col items-start text-yellow-50/90">
               <div class="flex justify-start items-center w-full gap-2">
-                <Icon :name="getWeatherIcon(weatherData.weather?.[0]?.id)" class="size-8" />
-                <span class="text-lg capitalize">{{ weatherMain || '' }}</span>
+                <Icon :name="getWeatherIcon(weatherData.weather?.[0]?.id)" class="size-12" />
+                <span class="text-2xl capitalize">{{ weatherMain || '' }}</span>
               </div>
-              <div class="flex justify-start gap-2">
+              <div class="flex justify-start gap-4">
                 <div class="flex justify-start items-center gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="-5 -4.5 24 24">
+                  <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="-5 -4.5 24 24">
                     <path fill="currentColor" d="m6 4.071l-3.95 3.95A1 1 0 0 1 .636 6.607L6.293.95a.997.997 0 0 1 1.414 0l5.657 5.657A1 1 0 0 1 11.95 8.02L8 4.07v9.586a1 1 0 1 1-2 0z"/></svg>
-                  <span>{{ tempMax !== null ? tempMax.toFixed(0) : '--' }}°</span>
+                  <span class="text-xl">{{ tempMax !== null ? tempMax.toFixed(0) : '--' }}°</span>
                 </div>
                 <div class="flex justify-start items-center gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="-5 -4.5 24 24">
+                  <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="-5 -4.5 24 24">
                     <path fill="currentColor" d="m8 11.243l3.95-3.95a1 1 0 1 1 1.414 1.414l-5.657 5.657a.997.997 0 0 1-1.414 0L.636 8.707A1 1 0 1 1 2.05 7.293L6 11.243V1.657a1 1 0 1 1 2 0z"/></svg>
                   <span>{{ tempMin !== null ? tempMin.toFixed(0) : '--' }}°</span>
                 </div>
@@ -25,7 +25,7 @@
               <h1 class="text-8xl font-light">{{ Math.round(weatherData.main.temp) }}</h1>
             </div>
           </div>
-          <div class="absolute inset-0 w-full h-full z-10 bg-gradient-to-t from-black/50 to-transparent"></div>
+          <div class="absolute inset-0 w-full h-full z-10 bg-gradient-to-t from-black/40 to-transparent"></div>
         </div>
       </div>
 
@@ -35,7 +35,7 @@
 
       <div v-if="photoData" class="absolute inset-0">
         <div class="w-full h-full filter brightness-110 contrast-110 saturate-110" :style="{ backgroundImage: `url(${photoData.urls.regular})`, backgroundSize: 'cover', backgroundPosition: 'center'}"></div>
-        <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-black/30"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-black/30"></div>
       </div>
 
       <div v-if="error" class="absolute inset-0 bg-sky-950"></div>
@@ -43,9 +43,9 @@
         <div v-if="showDrawer || showSearchDrawer" class="absolute inset-0 bg-slate-100/40 z-40" @click.self="toggleDrawer"></div>
       </transition>
       <transition name="slide-left">
-        <aside v-if="showDrawer" class="absolute top-0 left-0 w-full h-full bg-gray-900 text-gray-300 z-50 p-8 flex flex-col">
+        <aside v-if="showDrawer" class="absolute top-0 left-0 w-full h-full bg-slate-900 text-yellow-50/90 z-50 p-8 flex flex-col">
           <div class="flex-shrink-0 flex justify-between items-center my-4">
-            <h2 class="text-lg font-semibold">Locations</h2>
+            <h2 class="text-xl font-semibold">Locations</h2>
             <button @click="toggleDrawer" aria-label="Close">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-1 -1 24 24">
                 <path
@@ -56,15 +56,15 @@
             </button>
           </div>
           <div class="flex-1 overflow-y-auto no-scrollbar">
-            <div v-if="searchedCities.length === 0" class="text-gray-500 text-sm">
-              No cities searched yet.
+            <div v-if="searchedCities.length === 0" class="text-yellow-50/70">
+              <p class="text-lg font-light mt-8">No cities searched yet.</p>
             </div>
             <ul class="space-y-2">
               <li v-for="(c, index) in searchedCities" :key="index" class="p-3 hover:cursor-pointer hover:text-gray-200 transition ease-in-out duration-300 rounded">
                 <div class="flex flex-col text-sm">
                   <div class="w-full flex justify-between items-center">
-                    <h3 @click="loadCity(c)" class="capitalize">{{ c.city }}, {{ c.weather?.sys.country }}</h3>
-                    <Icon @click="removeCity(index)" name="jam:bookmark-remove" class="size-4 text-gray-500 hover:text-gray-200" />
+                    <h3 @click="loadCity(c)" class="capitalize text-lg">{{ c.city }}, {{ c.weather?.sys.country }}</h3>
+                    <Icon @click="removeCity(index)" name="material-symbols:heart-minus-rounded" class="size-6 text-yellow-50/70 hover:text-yellow-50/90" />
                   </div>
                   <div v-if="c.weather" class="flex justify-start items-center gap-2">
                     <span>{{ Math.round(c.weather.main.temp) }}°C</span>
@@ -80,23 +80,23 @@
           </div>
         </aside>
       </transition>
-      <transition name="slide-left" class="absolute top-0 left-0 w-full h-full bg-gray-900 text-gray-300 z-50 p-8 flex flex-col">
+      <transition name="slide-left" class="absolute top-0 left-0 w-full h-full bg-gray-900 text-yellow-50/90 z-50 p-8 flex flex-col">
         <aside v-if="showSearchDrawer" class="absolute inset-0 p-8 flex flex-col gap-4">
           <div class="flex-shrink-0 flex justify-between items-center my-4">
             <h2 class="text-lg font-semibold">Add a new location</h2>
-            <button @click="closeSearchDrawer" aria-label="Close">
+            <button @click="closeSearchDrawer" aria-label="Close" class="opacity-80 hover:opacity-100">
               <span>Cancel</span>
             </button>
           </div>
-          <div class="flex flex-col justify-center items-center bg-gray-600 text-gray-400 rounded-lg p-3">
+          <div class="flex flex-col justify-center items-center bg-gray-600 rounded-lg p-3 text-yellow-50">
             <div class="w-full flex justify-start gap-4">
               <svg class="flex-none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-2.5 -2.5 24 24">
               <path fill="currentColor" d="M8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12m6.32-1.094l3.58 3.58a1 1 0 1 1-1.415 1.413l-3.58-3.58a8 8 0 1 1 1.414-1.414z"/></svg>
-              <input @keyup.enter="() => handleSearch()" type="text" placeholder="Enter city name..." v-model="query" class="flex-1 focus:outline-none placeholder:text-gray-400" />
+              <input @keyup.enter="() => handleSearch()" type="text" placeholder="Enter city name..." v-model="query" class="flex-1 text-lg focus:outline-none placeholder:text-yellow-50/50" />
             </div>
             <div class="flex-1 w-full">
               <!-- Autocomplete dropdown -->
-              <ul v-if="suggestions.length > 0" class="w-full flex flex-col bg-gray-700 text-gray-200 mt-1 rounded shadow max-h-48 overflow-auto">
+              <ul v-if="suggestions.length > 0" class="w-full flex flex-col bg-gray-700 text-yellow-50/90 mt-1 rounded shadow max-h-48 overflow-auto">
                 <li v-for="(s, index) in suggestions" :key="index"
                   @click="selectCity(s)"
                   class="px-3 py-2 hover:bg-gray-600 cursor-pointer"
