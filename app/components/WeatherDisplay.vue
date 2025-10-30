@@ -173,7 +173,7 @@ const showSearchDrawer = ref(false)
 const localTime = ref('')
 const city = ref('')
 const query = ref('')
-const staticCity = ref('New Delhi')
+const staticCity = ref('Copenhagen')
 const searchedCities = ref<Array<{
   city: string
   weather: WeatherData | null
