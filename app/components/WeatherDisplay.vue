@@ -1,8 +1,8 @@
 <template>
   <div class="flex justify-center items-center h-screen bg-gray-100">
-    <div class="relative rounded-[40px] overflow-auto shadow-lg bg-white" style="width: 430px; height: 810px;">
+    <div class="relative rounded-[40px] overflow-auto shadow-lg bg-white h-[810px] w-[430px]">
       <div class="relative h-full w-full overflow-hidden">
-        <div class="relative z-30 w-full h-full flex flex-col justify-between" style="min-height: 810px; min-width: 430px;">
+        <div class="relative z-30 w-full h-full flex flex-col justify-between">
           <div class="relative z-20 h-full w-full p-8">
             <Controls :city="city" @open-search="toggleSearchDrawer" @open-list="toggleDrawer" @city-selected="fetchWeatherForCity" />
             <div v-if="weatherData" class="absolute bottom-0 h-64 flex flex-col items-start text-white">
@@ -25,18 +25,19 @@
               <h1 class="text-8xl font-light">{{ Math.round(weatherData.main.temp) }}</h1>
             </div>
           </div>
-          <div class="absolute inset-0 w-full h-full z-10 bg-gradient-to-t from-black/80 to-transparent"></div>
+          <div class="absolute inset-0 w-full h-full z-10 bg-gradient-to-t from-black/50 to-transparent"></div>
         </div>
+      </div>
+
+      <div v-if="isInitialLoading" class="absolute inset-0 z-60 h-full w-full">
+        <SplashScreen />
       </div>
 
       <div v-if="photoData" class="absolute inset-0">
         <div class="w-full h-full filter brightness-110 contrast-110 saturate-110" :style="{ backgroundImage: `url(${photoData.urls.regular})`, backgroundSize: 'cover', backgroundPosition: 'center'}"></div>
         <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-black/30"></div>
       </div>
-      <div v-if="loading" class="absolute inset-0 flex flex-col justify-center items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-          <path fill="currentColor" d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25"/><circle cx="12" cy="2.5" r="1.5" fill="currentColor"><animateTransform attributeName="transform" dur="0.75s" repeatCount="indefinite" type="rotate" values="0 12 12;360 12 12"/></circle></svg>
-      </div>
+
       <div v-if="error" class="absolute inset-0 bg-sky-950"></div>
       <transition name="fade">
         <div v-if="showDrawer || showSearchDrawer" class="absolute inset-0 bg-slate-100/40 z-40" @click.self="toggleDrawer"></div>
@@ -187,6 +188,7 @@ const cityInput = ref<string>('')
 const suggestions = ref<{ name: string; country: string }[]>([])
 const photoData = ref<UnsplashPhoto | null>(null)
 const CACHE_DURATION = 1000 * 60 * 60 * 3
+const isInitialLoading = ref(true)
 
 
 // --- Fetch city suggestions from OpenWeather ---
@@ -518,6 +520,23 @@ onMounted(() => {
     window.removeEventListener('storage', handleStorageEvent)
   });
 
+  // ✅ Determine if we even need to show splash
+  const currentCity = localStorage.getItem('currentCity')?.trim() || ''
+  const hasPhoto = hasValidLocalItem('unsplashPhoto')
+  const hasWeather = hasValidLocalItem('weather_' + currentCity)
+
+  // ✅ If all required data exists, no splash screen
+  if (currentCity && hasPhoto && hasWeather) {
+    isInitialLoading.value = false
+    loadPhotoFromStorage()
+    loadWeatherFromStorage()
+    updateLocalTime()
+    city.value = currentCity
+
+    return
+  }
+
+  isInitialLoading.value = true
   ;(async () => {
     updateLocalTime()
     let currentCity = localStorage.getItem('currentCity')?.trim() || ''
@@ -541,6 +560,7 @@ onMounted(() => {
       loadPhotoFromStorage()
       loadWeatherFromStorage()
     }
+    isInitialLoading.value = false
   })()
 })
 </script>
