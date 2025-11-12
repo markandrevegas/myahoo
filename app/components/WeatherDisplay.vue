@@ -277,6 +277,7 @@ const searchCity = async (cityName: string) => {
     })
 
     localStorage.setItem('searchedCities', JSON.stringify(searchedCities.value))
+    localStorage.setItem('currentCity', searchedCities.value[searchedCities.value.length - 1]!.city)
     cityInput.value = ''
     query.value = ''
   } catch (e) {
@@ -520,12 +521,32 @@ onMounted(() => {
     window.removeEventListener('storage', handleStorageEvent)
   });
 
-  // ✅ Determine if we even need to show splash
-  const currentCity = localStorage.getItem('currentCity')?.trim() || ''
+  // Determine the startup city
+  const storedCurrentCity = localStorage.getItem('currentCity')?.trim() || ''
+  const storedSearched = localStorage.getItem('searchedCities')
+  let lastSearchedCity = ''
+
+  if (storedSearched) {
+    try {
+      const parsed = JSON.parse(storedSearched)
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // get the last searched one by timestamp or order
+        const sorted = parsed.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+        lastSearchedCity = sorted[0]?.city?.trim() || ''
+      }
+    } catch (err) {
+      console.warn('Failed to parse searchedCities:', err)
+    }
+  }
+
+  let currentCity = storedCurrentCity || lastSearchedCity || staticCity.value
+  if (!storedCurrentCity && currentCity) {
+    localStorage.setItem('currentCity', currentCity)
+  }
+
   const hasPhoto = hasValidLocalItem('unsplashPhoto')
   const hasWeather = hasValidLocalItem('weather_' + currentCity)
 
-  // ✅ If all required data exists, no splash screen
   if (currentCity && hasPhoto && hasWeather) {
     isInitialLoading.value = false
     loadPhotoFromStorage()
