@@ -1,10 +1,17 @@
+// FIX: Re-include 'vi' in the destructured import.
+// Nuxt's test environment often disables globals, requiring explicit import access for vi.mock.
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { defineComponent } from 'vue'
-import { useUnsplash } from '~/composables/useUnsplash'
+import { useUnsplash } from '../../composables/useUnsplash'
 
+// The vi object is now accessed via the imported object, which is necessary if globals: false.
 const mockFetch = vi.fn()
-vi.stubGlobal('$fetch', mockFetch)
+
+// This call now uses the imported vi.mock.
+vi.mock('#app', () => ({
+  $fetch: mockFetch,
+}))
 
 // Helper to mount a dummy component that uses the composable
 function mountComposable() {
@@ -23,21 +30,34 @@ function mountComposable() {
 describe('useUnsplash', () => {
   let localStorageMock: Record<string, string>
 
+  // The ReturnType<typeof vi.spyOn> utility should work correctly now that vi is imported.
+  let getItemSpy: ReturnType<typeof vi.spyOn>
+  let setItemSpy: ReturnType<typeof vi.spyOn>
+  let removeItemSpy: ReturnType<typeof vi.spyOn>
+
   beforeEach(() => {
     localStorageMock = {}
-    vi.stubGlobal('localStorage', {
-      getItem: vi.fn((key: string) => localStorageMock[key] || null),
-      setItem: vi.fn((key: string, value: string) => {
+
+    // vi is available via the import
+    getItemSpy = vi.spyOn(localStorage, 'getItem').mockImplementation((key: string) => localStorageMock[key] || null)
+    setItemSpy = vi.spyOn(localStorage, 'setItem').mockImplementation((key: string, value: string) => {
         localStorageMock[key] = value
-      }),
-      removeItem: vi.fn((key: string) => delete localStorageMock[key])
+      })
+    removeItemSpy = vi.spyOn(localStorage, 'removeItem').mockImplementation((key: string) => {
+      delete localStorageMock[key]
     })
+
+    // This may still be an issue due to vi.stubGlobal being deprecated, but let's try it first.
     vi.stubGlobal('window', {})
   })
 
   afterEach(() => {
     vi.clearAllMocks()
     vi.restoreAllMocks()
+
+    getItemSpy.mockRestore()
+    setItemSpy.mockRestore()
+    removeItemSpy.mockRestore()
   })
 
   it('initializes with default values', () => {
@@ -107,6 +127,7 @@ describe('useUnsplash', () => {
 
   it('handles corrupted localStorage JSON safely', async () => {
     localStorageMock['unsplashPhoto'] = '{bad json'
+
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const { photo, city } = mountComposable()
     await flushPromises()
@@ -114,5 +135,6 @@ describe('useUnsplash', () => {
     expect(photo.value).toBeNull()
     expect(city.value).toBe('')
     expect(warnSpy).toHaveBeenCalled()
+    warnSpy.mockRestore()
   })
 })
