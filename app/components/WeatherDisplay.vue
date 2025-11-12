@@ -118,6 +118,10 @@ import { ref } from 'vue'
 import { useHead } from '#app'
 import { useUnsplash } from '~/composables/useUnsplash'
 import { useWeather } from '~/composables/useWeather'
+import { useCityAutocomplete } from '~/composables/useCityAutocomplete'
+
+const config = useRuntimeConfig()
+const apiKey = config.public.openWeatherApiKey
 
 useHead({
   title: 'Home'
@@ -172,7 +176,7 @@ const showDrawer = ref(false)
 const showSearchDrawer = ref(false)
 const localTime = ref('')
 const city = ref('')
-const query = ref('')
+const { query, suggestions } = useCityAutocomplete(apiKey)
 const staticCity = ref('Copenhagen')
 const searchedCities = ref<Array<{
   city: string
@@ -185,32 +189,9 @@ const currentTemp = ref<number | null>(null)
 const tempMin = ref<number | null>(null)
 const tempMax = ref<number | null>(null)
 const cityInput = ref<string>('')
-const suggestions = ref<{ name: string; country: string }[]>([])
 const photoData = ref<UnsplashPhoto | null>(null)
 const CACHE_DURATION = 1000 * 60 * 60 * 3
 const isInitialLoading = ref(true)
-
-
-// --- Fetch city suggestions from OpenWeather ---
-watch(query, async (val) => {
-  if (!val || val.length < 2) {
-    suggestions.value = []
-    return
-  }
-
-  try {
-    const config = useRuntimeConfig()
-    const apiKey = config.public.openWeatherApiKey
-    const res = await fetch(
-      `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(val)}&limit=5&appid=${apiKey}`
-    )
-    const data = await res.json()
-    suggestions.value = data.map((c: any) => ({ name: c.name, country: c.country }))
-    console.log(suggestions.value)
-  } catch (err) {
-    suggestions.value = []
-  }
-})
 
 // --- Called when user selects a suggestion ---
 const selectCity = async (s: { name: string; country: string }) => {
