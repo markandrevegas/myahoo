@@ -39,7 +39,8 @@ export default defineNuxtConfig({
     "@nuxtjs/tailwindcss",
     "@nuxt/fonts",
     "@nuxt/icon",
-    "@nuxt/image"
+    "@nuxt/image",
+    '@nuxt/test-utils/module'
   ],
   runtimeConfig: {
     unsplashAccessKey: process.env.UNSPLASH_ACCESS_KEY,
