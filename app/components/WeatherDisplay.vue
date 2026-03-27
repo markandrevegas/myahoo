@@ -46,15 +46,16 @@
 
     return 'ph:question'
   }
+
   const weatherMain = ref<string>('Rain')
   const weatherError = ref<any>(null)
+
   const { photo, loading, error, fetchPhoto } = useUnsplash() as {
     photo: Ref<UnsplashPhoto | null>
     loading: Ref<boolean>
     error: Ref<string | null>
     fetchPhoto: (city: string) => Promise<void>
   }
-
 
   const showDrawer = ref(false)
   const showSearchDrawer = ref(false)
@@ -231,6 +232,7 @@
         throw new Error(message || 'Failed to fetch weather')
       }
       if (data) setWeatherRefs(data as WeatherData)
+      console.log('weatherRefs: ', data)
     } catch (err) {
       console.error('Weather error:', err)
       weatherError.value = err
