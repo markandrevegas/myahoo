@@ -1,5 +1,7 @@
 <template>
-  <WeatherDisplay />
+  <ClientOnly>
+    <WeatherDisplay />
+  </ClientOnly>
 </template>
 
 <script setup lang="ts">

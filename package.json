@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "npx nuxi build",
-    "dev": "nuxt dev",
+    "dev": "CHOKIDAR_USEPOLLING=1 CHOKIDAR_INTERVAL=200 VITE_USE_POLLING=true nuxt dev",
     "generate": "nuxt generate",
     "preview": "npx serve .output/public",
     "postinstall": "nuxt prepare",

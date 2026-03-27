@@ -12,6 +12,7 @@ const props = defineProps<{
 
 const city = ref<string>('')
 const localTime = ref<string>('')
+const isClientMounted = ref(false)
 
 // 2. Function to handle the click on the plus sign
 const handleOpenSearch = () => {
@@ -44,6 +45,7 @@ const updateLocalTime = () => {
 
 // --- Lifecycle ---
 onMounted(() => {
+  isClientMounted.value = true
   loadCityFromStorage()
   updateLocalTime()
   window.addEventListener('storage', (event) => {
@@ -67,20 +69,22 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="w-full flex justify-between items-center text-yellow-50">
-    <svg @click="handleOpenList"  xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="-5 -7 24 24">
-      <path fill="currentColor" d="M1 0h5a1 1 0 1 1 0 2H1a1 1 0 1 1 0-2m7 8h5a1 1 0 0 1 0 2H8a1 1 0 1 1 0-2M1 4h12a1 1 0 0 1 0 2H1a1 1 0 1 1 0-2"/>
-    </svg>
-
-    <div class="flex flex-col justify-center items-center">
-      <span class="text-2xl capitalize">{{ props.city }}</span>
-      <span class="text-lg">{{ localTime }}</span>
-    </div>
-
-    <button @click="handleOpenSearch" class="p-1 rounded-full hover:bg-white/20 transition-colors">
-      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="-4.5 -4.5 24 24">
-        <path fill="currentColor" d="M8.9 6.9v-5a1 1 0 1 0-2 0v5h-5a1 1 0 1 0 0 2h5v5a1 1 0 1 0 2 0v-5h5a1 1 0 1 0 0-2z"/>
+  <div class="w-full flex flex-col">
+    <div class="w-full flex justify-between items-center text-yellow-50">
+      <svg @click="handleOpenList"  xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="-5 -7 24 24">
+        <path fill="currentColor" d="M1 0h5a1 1 0 1 1 0 2H1a1 1 0 1 1 0-2m7 8h5a1 1 0 0 1 0 2H8a1 1 0 1 1 0-2M1 4h12a1 1 0 0 1 0 2H1a1 1 0 1 1 0-2"/>
       </svg>
-    </button>
+
+      <div class="flex flex-col justify-center items-center">
+        <span class="text-2xl capitalize">{{ props.city }}</span>
+      </div>
+
+      <button @click="handleOpenSearch" class="p-1 rounded-full hover:bg-white/20 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="-4.5 -4.5 24 24">
+          <path fill="currentColor" d="M8.9 6.9v-5a1 1 0 1 0-2 0v5h-5a1 1 0 1 0 0 2h5v5a1 1 0 1 0 2 0v-5h5a1 1 0 1 0 0-2z"/>
+        </svg>
+      </button>
+    </div>
+    <p v-if="isClientMounted" class="text-lg text-center text-palladian">{{ localTime }}</p>
   </div>
 </template>
