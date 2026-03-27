@@ -61,6 +61,7 @@
   const showSearchDrawer = ref(false)
   const localTime = ref('')
   const city = ref('')
+  const country = ref('')
   const { query, suggestions } = useCityAutocomplete(apiKey)
   const staticCity = ref('Copenhagen')
   const searchedCities = ref<Array<{
@@ -207,6 +208,7 @@
     tempMin.value = weatherData.value.main.temp_min
     tempMax.value = weatherData.value.main.temp_max
     weatherMain.value = weatherData.value.weather?.[0]?.main || ''
+    country.value = weatherData.value.sys.country
 
     localStorage.setItem(
       'weather_' + city.value,
@@ -457,7 +459,7 @@
       <div class="relative h-full w-full overflow-hidden">
         <div class="relative z-30 w-full h-full flex flex-col justify-between">
           <div class="relative z-20 h-full w-full p-4">
-            <Controls :city="city" @open-search="toggleSearchDrawer" @open-list="toggleDrawer" @city-selected="fetchWeatherForCity" />
+            <Controls :city="city" :country="country" @open-search="toggleSearchDrawer" @open-list="toggleDrawer" @city-selected="fetchWeatherForCity" />
             <div v-if="weatherData" class="absolute bottom-0 h-[18rem] max-h-[24rem] flex flex-col items-start text-yellow-50/90">
               <div class="flex justify-start items-center w-full gap-2">
                 <Icon :name="getWeatherIcon(weatherData.weather?.[0]?.id)" class="size-12" />

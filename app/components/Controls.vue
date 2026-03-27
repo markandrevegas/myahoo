@@ -8,6 +8,7 @@ const emit = defineEmits<{
 }>()
 const props = defineProps<{
   city: string
+  country: string
 }>()
 
 const city = ref<string>('')
@@ -37,10 +38,20 @@ const loadCityFromStorage = () => {
 
 const updateLocalTime = () => {
   const now = new Date()
-  // format as HH:MM, with leading zeros
+
   const hours = String(now.getHours()).padStart(2, '0')
   const minutes = String(now.getMinutes()).padStart(2, '0')
-  localTime.value = `${hours}:${minutes}`
+  const timeStr = `${hours}:${minutes}`
+
+  const dateOptions = { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  } as const
+  const dateStr = now.toLocaleDateString(undefined, dateOptions)
+
+  localTime.value = `${dateStr} | ${timeStr}`
 }
 
 // --- Lifecycle ---
@@ -70,11 +81,15 @@ onMounted(() => {
 
 <template>
   <div class="w-full flex flex-col">
+    <div class="h-24 flex flex-col gap-1 justify-center text-palladian text-center">
+      <p class="text-3xl font-light">{{ props.city }}, {{ props.country }}</p>
+      <p v-if="isClientMounted" class="text-xs text-center text-palladian">{{ localTime }}</p>
+    </div>
     <div class="w-full flex justify-between items-center text-yellow-50">
       <button @click="handleOpenList" class="scale-75"><SettingsIcon/></button>
 
       <div class="flex flex-col justify-center items-center">
-        <p class="text-lg capitalize">{{ props.city }}</p>
+        <p class="text-2xl font-light">{{ props.city }}, {{ props.country }}</p>
       </div>
 
       <button @click="handleOpenSearch" class="scale-75">
