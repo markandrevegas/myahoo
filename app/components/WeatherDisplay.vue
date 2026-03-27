@@ -476,7 +476,7 @@
               <h1 class="text-8xl font-light">{{ Math.round(weatherData.main.temp) }}</h1>
             </div>
           </div>
-          <div class="absolute inset-0 w-full h-full z-10 bg-gradient-to-t from-black/40 to-transparent"></div>
+          <Overlay />
         </div>
       </div>
 
