@@ -3,6 +3,9 @@
 @tailwind utilities;
 
 @layer base {
+  body {
+    @apply text-palladian
+  }
   input[type="text"] {
     @apply bg-transparent text-white focus:border-0 focus:outline-0;
   }

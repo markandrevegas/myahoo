@@ -483,7 +483,8 @@
       <SplashScreen v-if="isInitialLoading" />
 
       <div v-if="photoData" class="absolute inset-0">
-        <div class="w-full h-full filter brightness-110 contrast-110 saturate-110" :style="{ backgroundImage: `url(${photoData.urls.regular})`, backgroundSize: 'cover', backgroundPosition: 'center'}"></div>
+        <div class="w-full h-full filter brightness-110 contrast-110 saturate-110"
+          :style="'background-image: url(' + photoData.urls.regular + '); background-size: cover; background-position: center'"></div>
         <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-black/30"></div>
       </div>
 
@@ -492,9 +493,9 @@
         <div v-if="showDrawer || showSearchDrawer" class="absolute inset-0 bg-slate-100/40 z-40" @click.self="toggleDrawer"></div>
       </Transition>
       <Transition name="slide-left">
-        <aside v-if="showDrawer" class="absolute top-0 left-0 w-full h-full bg-slate-900 text-yellow-50/90 z-50 p-8 flex flex-col">
+        <aside v-if="showDrawer" class="absolute top-0 left-0 w-full h-full bg-abyssal text-palladian z-50 p-4 flex flex-col">
           <div class="flex-shrink-0 flex justify-between items-center my-4">
-            <h2 class="text-xl font-semibold">Locations</h2>
+            <h2 class="text-lg font-semibold">Locations</h2>
             <button @click="toggleDrawer" aria-label="Close">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-1 -1 24 24">
                 <path
@@ -529,18 +530,17 @@
           </div>
         </aside>
       </Transition>
-      <Transition name="slide-left" class="absolute top-0 left-0 w-full h-full bg-gray-900 text-yellow-50/90 z-50 p-8 flex flex-col">
-        <aside v-if="showSearchDrawer" class="absolute inset-0 p-8 flex flex-col gap-4">
+      <Transition name="slide-left" class="absolute top-0 left-0 w-full h-full bg-abyssal text-palladian z-50 p-4 flex flex-col">
+        <aside v-if="showSearchDrawer" class="absolute inset-0 flex flex-col gap-4">
           <div class="flex-shrink-0 flex justify-between items-center my-4">
             <h2 class="text-lg font-semibold">Add a new location</h2>
-            <button @click="closeSearchDrawer" aria-label="Close" class="opacity-80 hover:opacity-100">
-              <span>Cancel</span>
+            <button @click="closeSearchDrawer" aria-label="Close">
+              <XIcon />
             </button>
           </div>
-          <div class="flex flex-col justify-center items-center bg-gray-600 rounded-lg p-3 text-yellow-50">
+          <div class="flex flex-col justify-center items-center bg-gray-600 rounded-lg">
             <div class="w-full flex justify-start gap-4">
-              <svg class="flex-none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-2.5 -2.5 24 24">
-              <path fill="currentColor" d="M8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12m6.32-1.094l3.58 3.58a1 1 0 1 1-1.415 1.413l-3.58-3.58a8 8 0 1 1 1.414-1.414z"/></svg>
+              <SearchIcon />
               <input @keyup.enter="() => handleSearch()" type="text" placeholder="Enter city name..." v-model="query" class="flex-1 text-lg focus:outline-none placeholder:text-yellow-50/50" />
             </div>
             <div class="flex-1 w-full">
