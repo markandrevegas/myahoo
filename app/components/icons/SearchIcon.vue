@@ -1,6 +1,5 @@
 <template>
-  <div
-    className="cursor-pointer select-none p-2 hover:bg-accent rounded-md transition-colors duration-200 flex items-center justify-center overflow-hidden"
+  <span class="cursor-pointer select-none transition-colors duration-200 flex items-center justify-center overflow-hidden"
     @mouseenter="mouseEnterHandler"
     @mouseleave="mouseLeaveHandler"
     role="button"
@@ -10,8 +9,8 @@
       ref="target"
       is="svg"
       xmlns="http://www.w3.org/2000/svg"
-      width="28"
-      height="28"
+      width="24"
+      height="24"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -22,7 +21,7 @@
       <circle cx="11" cy="11" r="8" />
       <path d="m21 21-4.3-4.3" />
     </Motion>
-  </div>
+  </span>
 </template>
 
 <script>

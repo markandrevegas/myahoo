@@ -1,100 +1,82 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+  import { ref, onMounted, onUnmounted } from 'vue'
 
-// 1. Define the event this component can emit
-const emit = defineEmits<{
-  (e: 'open-search'): void
-  (e: 'open-list'): void
-}>()
-const props = defineProps<{
-  city: string
-  country: string
-}>()
+  const emit = defineEmits<{
+    (e: 'open-search'): void
+    (e: 'open-list'): void
+  }>()
 
-const city = ref<string>('')
-const localTime = ref<string>('')
-const isClientMounted = ref(false)
+  const props = defineProps<{
+    city: string
+    country: string
+    localTime?: string
+  }>()
 
-// 2. Function to handle the click on the plus sign
-const handleOpenSearch = () => {
-  emit('open-search')
-}
-const handleOpenList= () => {
-  emit('open-list')
-}
+  const isClientMounted = ref(false)
+  const formattedDateTime = ref<string>('')
 
-// --- Methods ---
-const loadCityFromStorage = () => {
-  const stored = localStorage.getItem('unsplashPhoto')
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored)
-      city.value = parsed.city || ''
-    } catch (e) {
-      console.warn('Failed to parse stored city:', e)
+  const updateFormattedDateTime = () => {
+    if (!props.localTime) {
+      formattedDateTime.value = ''
+      return
     }
+
+    const now = new Date()
+    const dateOptions = { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    } as const
+    const dateStr = now.toLocaleDateString(undefined, dateOptions)
+
+    formattedDateTime.value = `${dateStr} | ${props.localTime}`
   }
-}
 
-const updateLocalTime = () => {
-  const now = new Date()
+  const handleOpenSearch = () => {
+    emit('open-search')
+  }
 
-  const hours = String(now.getHours()).padStart(2, '0')
-  const minutes = String(now.getMinutes()).padStart(2, '0')
-  const timeStr = `${hours}:${minutes}`
+  const handleOpenList = () => {
+    emit('open-list')
+  }
 
-  const dateOptions = { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  } as const
-  const dateStr = now.toLocaleDateString(undefined, dateOptions)
+  onMounted(() => {
+    isClientMounted.value = true
+    updateFormattedDateTime()
 
-  localTime.value = `${dateStr} | ${timeStr}`
-}
+    // Update date portion every minute
+    const interval = setInterval(updateFormattedDateTime, 60 * 1000)
 
-// --- Lifecycle ---
-onMounted(() => {
-  isClientMounted.value = true
-  loadCityFromStorage()
-  updateLocalTime()
-  window.addEventListener('storage', (event) => {
-    if (event.key === 'unsplashPhoto' && event.newValue) {
-      loadCityFromStorage()
-    }
+    onUnmounted(() => {
+      clearInterval(interval)
+    })
   })
-  setInterval(loadCityFromStorage, 1000)
 
-  // Auto-refresh every 30s or 1min
-  const timeInterval = setInterval(updateLocalTime, 60 * 1000)
-  const cityInterval = setInterval(loadCityFromStorage, 1000)
-
-  // Clean up when component unmounts
-  onUnmounted(() => {
-    clearInterval(timeInterval)
-    clearInterval(cityInterval)
-    window.removeEventListener('storage', loadCityFromStorage)
+  // Watch for localTime prop changes
+  watch(() => props.localTime, () => {
+    updateFormattedDateTime()
   })
-})
 </script>
 
 <template>
-  <div class="w-full flex flex-col">
-    <div class="h-24 flex flex-col gap-1 justify-center text-palladian text-center">
+  <div class="w-full flex flex-col  text-palladian">
+    <div class="h-16 flex flex-col gap-1 justify-center text-center">
       <p class="text-3xl font-light">{{ props.city }}, {{ props.country }}</p>
-      <p v-if="isClientMounted" class="text-xs text-center text-palladian">{{ localTime }}</p>
+      <p v-if="isClientMounted && formattedDateTime" class="text-xs text-center text-palladian">
+        {{ formattedDateTime }}
+      </p>
     </div>
-    <div class="w-full flex justify-between items-center text-yellow-50">
-      <button @click="handleOpenList" class="scale-75"><SettingsIcon/></button>
+    <div class="w-full flex justify-center items-center h-24">
+      <!--<button @click="handleOpenList" class="scale-75">
+        <SettingsIcon />
+      </button>-->
 
-      <div class="flex flex-col justify-center items-center">
-        <p class="text-2xl font-light">{{ props.city }}, {{ props.country }}</p>
-      </div>
 
-      <button @click="handleOpenSearch" class="scale-75">
-        <SearchIcon />
-      </button>
+      <!--<button @click="handleOpenSearch" class="flex justify-start items-center gap-1 pl-1 pr-4 py-1 bg-zinc-200/80 rounded-full text-[11px] text-abyssal font-medium">
+        <SearchIcon class="scale-50" />
+        <span>Search cities...</span>
+      </button>-->
     </div>
   </div>
 </template>
