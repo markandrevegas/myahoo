@@ -1,4 +1,4 @@
-interface WeatherData {
+export interface WeatherData {
   weather: {
     id: number
     main: string
@@ -27,41 +27,83 @@ interface WeatherData {
   dt: number
 }
 
-export async function useWeather(city: string): Promise<{
-  data: WeatherData | null
-  error: Error | null
-}> {
-  if (!city) throw new Error("City name is required")
+// Cache to prevent duplicate requests
+const weatherCache = new Map<string, Promise<WeatherData>>()
+const CACHE_DURATION = 1000 * 60 * 10 // 10 minutes
 
+export function useWeather(city?: string) {
   const config = useRuntimeConfig()
   const apiKey = config.public.openWeatherApiKey
 
-  try {
-    const geoUrl =
-      'https://api.openweathermap.org/geo/1.0/direct?q=' +
-      encodeURIComponent(city) +
-      '&limit=1&appid=' +
-      apiKey
+  const data = ref<WeatherData | null>(null)
+  const loading = ref(false)
+  const error = ref<Error | null>(null)
 
-    const geoData = await $fetch<any[]>(geoUrl)
-
-    if (!geoData || geoData.length === 0) {
-      return { data: null, error: new Error('City "' + city + '" not found') }
+  async function fetchWeather(cityName: string): Promise<WeatherData> {
+    if (!cityName?.trim()) {
+      throw new Error('City name is required')
     }
 
-    const validCity = geoData[0].name
-
-    const weatherUrl =
-      'https://api.openweathermap.org/data/2.5/weather?q=' +
-      encodeURIComponent(validCity) +
-      '&units=metric&appid=' +
-      apiKey
-
-    const data = await $fetch<WeatherData>(weatherUrl)
-    return { data, error: null }
+    const normalizedCity = cityName.trim().toLowerCase()
     
-  } catch (err) {
-    const error = err instanceof Error ? err : new Error(String(err))
-    return { data: null, error }
+    // Check cache first
+    const cached = weatherCache.get(normalizedCity)
+    if (cached) {
+      return cached
+    }
+
+    // Create promise and cache it immediately (deduplication)
+    const promise = (async () => {
+      const params = new URLSearchParams({
+        q: cityName,
+        units: 'metric',
+        appid: apiKey
+      })
+
+      const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?${params}`
+      
+      const result = await $fetch<WeatherData>(weatherUrl)
+      
+      // Clear cache after duration
+      setTimeout(() => {
+        weatherCache.delete(normalizedCity)
+      }, CACHE_DURATION)
+      
+      return result
+    })()
+
+    weatherCache.set(normalizedCity, promise)
+    return promise
+  }
+
+  async function fetch(cityName: string) {
+    loading.value = true
+    error.value = null
+    data.value = null
+
+    try {
+      const result = await fetchWeather(cityName)
+      data.value = result
+      return { data: result, error: null }
+    } catch (err) {
+      const apiError = err instanceof Error ? err : new Error(String(err))
+      error.value = apiError
+      return { data: null, error: apiError }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Auto-fetch if city provided
+  if (city) {
+    fetch(city)
+  }
+
+  return {
+    data: readonly(data),
+    loading: readonly(loading),
+    error: readonly(error),
+    fetch,
+    refetch: () => city ? fetch(city) : Promise.resolve({ data: null, error: null })
   }
 }

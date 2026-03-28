@@ -96,6 +96,5 @@ onMounted(() => {
         <SearchIcon />
       </button>
     </div>
-    <p v-if="isClientMounted" class="text-sm text-center text-palladian">{{ localTime }}</p>
   </div>
 </template>
