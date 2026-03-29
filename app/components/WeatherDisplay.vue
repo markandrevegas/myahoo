@@ -367,7 +367,7 @@
 <template>
   <div class="flex flex-col justify-center h-screen bg-gray-100 p-8 dark:bg-gray-900">
     <div class="relative rounded-2xl overflow-auto shadow-lg bg-white w-full max-w-[393px] h-[616px] mx-auto flex flex-col justify-center">
-      <div class="relative z-40 flex-1 flex flex-col justify-center items-stretch h-full w-full overflow-hidden">
+      <div class="relative z-40 flex-1 flex flex-col items-stretch h-full w-full overflow-hidden">
         <div class="relative z-40">
           <Controls :city="city" :country="country" :local-time="localTime"@open-search="toggleSearchDrawer" @open-list="toggleDrawer" @city-selected="fetchWeather" />
           <div v-if="weatherData" class="relative my-auto h-[18rem] max-h-[24rem] flex flex-col items-center text-palladian">
