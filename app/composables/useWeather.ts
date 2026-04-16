@@ -29,7 +29,7 @@ export interface WeatherData {
 
 // Cache to prevent duplicate requests
 const weatherCache = new Map<string, Promise<WeatherData>>()
-const CACHE_DURATION = 1000 * 60 * 10 // 10 minutes
+const cache_duration = 1000 * 60 * 10 // 10 minutes
 
 export function useWeather(city?: string) {
 	const config = useRuntimeConfig()
@@ -63,11 +63,12 @@ export function useWeather(city?: string) {
 			const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?${params}`
 
 			const result = await $fetch<WeatherData>(weatherUrl)
-
+			console.log(`[API Response] Weather for ${cityName}:`, result)
+			
 			// Clear cache after duration
 			setTimeout(() => {
 				weatherCache.delete(normalizedCity)
-			}, CACHE_DURATION)
+			}, cache_duration)
 
 			return result
 		})()

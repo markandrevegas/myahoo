@@ -13,24 +13,27 @@
   }>()
 
   const isClientMounted = ref(false)
-  const formattedDateTime = ref<string>('')
+  const formattedDate = ref('')
+  const formattedTime = ref('')
 
   const updateFormattedDateTime = () => {
     if (!props.localTime) {
-      formattedDateTime.value = ''
+      formattedDate.value = ''
+      formattedTime.value = ''
       return
     }
 
     const now = new Date()
     const dateOptions = { 
       weekday: 'long', 
-      year: 'numeric', 
+      // year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
     } as const
-    const dateStr = now.toLocaleDateString(undefined, dateOptions)
 
-    formattedDateTime.value = `${dateStr} | ${props.localTime}`
+    // Set the values separately
+    formattedDate.value = now.toLocaleDateString(undefined, dateOptions)
+    formattedTime.value = props.localTime
   }
 
   const handleOpenSearch = () => {
@@ -60,24 +63,22 @@
 </script>
 
 <template>
-  <div class="w-full flex flex-col text-palladian">
-    <div class="w-full flex justify-center items-center h-24">
+  <div class="relative w-full flex flex-col text-palladian z-50">
+    <div class="w-full h-24 p-4 hidden">
       <button @click="handleOpenList" class="scale-75">
-        <SettingsIcon />
+        <MenuIcon />
       </button>
-
-
-      <!--<button @click="handleOpenSearch" class="flex justify-start items-center gap-1 pl-1 pr-4 py-1 bg-zinc-200/80 rounded-full text-[11px] text-abyssal font-medium">
-        <SearchIcon class="scale-50" />
-        <span>Search cities...</span>
-      </button>-->
     </div>
-    <div class="h-16 flex flex-col gap-1 justify-center text-center">
-      <p class="text-3xl font-light">{{ props.city }}, {{ props.country }}</p>
-      <p v-if="isClientMounted && formattedDateTime" class="text-xs text-center text-palladian">
-        {{ formattedDateTime }}
-      </p>
+    <div class="h-48 flex flex-col gap-1 justify-center text-center">
+      <p class="text-2xl font-light">{{ props.city }}, {{ props.country }}</p>
+      <div class="flex justify-center gap-4">
+        <p v-if="isClientMounted && formattedDate" class="inline-block text-center text-palladian">
+          {{ formattedDate }}
+        </p>
+        <p v-if="isClientMounted && formattedTime" class="inline-block text-center text-palladian">
+          {{ formattedTime }}
+        </p>
+      </div>
     </div>
-    
   </div>
 </template>

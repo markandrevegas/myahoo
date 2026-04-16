@@ -27,8 +27,8 @@
   }
 
   // Constants
-  const CACHE_DURATION = 1000 * 60 * 60 * 3 // 3 hours
-  const STATIC_CITY = 'Copenhagen'
+  const cache_duration = 1000 * 60 * 60 * 3 // 3 hours
+  const static_city = 'Miami'
 
   // Weather icon mapping
   function getWeatherIcon(id?: number): string {
@@ -65,7 +65,6 @@
   const photoData = ref<UnsplashPhoto | null>(null)
   const searchedCities = ref<SearchedCity[]>([])
   const isInitialLoading = ref(true)
-
   // Computed properties
   const currentTemp = computed(() => weatherData.value?.main.temp ?? null)
   const tempMin = computed(() => weatherData.value?.main.temp_min ?? null)
@@ -93,7 +92,7 @@
       localStorage.removeItem(key)
     },
 
-    isValid(key: string, maxAge: number = CACHE_DURATION): boolean {
+    isValid(key: string, maxAge: number = cache_duration): boolean {
       const item = this.get<{ timestamp: number }>(key)
       if (!item?.timestamp) return false
       return Date.now() - item.timestamp < maxAge
@@ -277,7 +276,7 @@
     }
 
     if (!currentCity) {
-      currentCity = STATIC_CITY
+      currentCity = static_city
       storage.set('currentCity', currentCity)
     }
 
@@ -366,45 +365,10 @@
 </script>
 <template>
   <div class="flex flex-col justify-center h-screen bg-gray-100 p-8 dark:bg-gray-900">
-    <div class="relative rounded-2xl overflow-auto shadow-lg bg-white w-full max-w-[393px] h-[616px] mx-auto flex flex-col justify-center">
-      <div class="relative z-40 flex-1 flex flex-col items-stretch h-full w-full overflow-hidden">
-        <div class="relative z-40">
-          <Controls :city="city" :country="country" :local-time="localTime"@open-search="toggleSearchDrawer" @open-list="toggleDrawer" @city-selected="fetchWeather" />
-          <div v-if="weatherData" class="relative my-auto h-[18rem] max-h-[24rem] flex flex-col items-center text-palladian">
-            <p>{{ weatherMain || '' }}</p>
-            <div class="flex items-start">
-              <span class="text-9xl font-light tracking-tighter leading-none">
-                {{ Math.round(weatherData.main.temp) }}
-              </span>
-              
-              <span class="text-5xl font-light pt-3">
-                &deg;C
-              </span>
-            </div>
-            <button @click="toggleSearchDrawer" class="flex justify-start items-center gap-1 pl-1 pr-4 py-1 bg-zinc-200/80 rounded-full text-[11px] text-abyssal font-medium">
-              <SearchIcon class="scale-50" />
-              <span>Search cities...</span>
-            </button>
-            <div class="hidden flex justify-start items-center w-full gap-2">
-              <Icon :name="getWeatherIcon(weatherData.weather?.[0]?.id)" class="size-12" />
-              <span class="text-2xl capitalize">{{ weatherMain || '' }}</span>
-            </div>
-            <div class="flex justify-start gap-4">
-              <div class="flex justify-start items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="-5 -4.5 24 24">
-                  <path fill="currentColor" d="m6 4.071l-3.95 3.95A1 1 0 0 1 .636 6.607L6.293.95a.997.997 0 0 1 1.414 0l5.657 5.657A1 1 0 0 1 11.95 8.02L8 4.07v9.586a1 1 0 1 1-2 0z"/>
-                </svg>
-                <span class="text-xl">{{ tempMax !== null ? tempMax.toFixed(0) : '--' }}°</span>
-              </div>
-              <div class="flex justify-start items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="-5 -4.5 24 24">
-                  <path fill="currentColor" d="m8 11.243l3.95-3.95a1 1 0 1 1 1.414 1.414l-5.657 5.657a.997.997 0 0 1-1.414 0L.636 8.707A1 1 0 1 1 2.05 7.293L6 11.243V1.657a1 1 0 1 1 2 0z"/>
-                </svg>
-                <span>{{ tempMin !== null ? tempMin.toFixed(0) : '--' }}°</span>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div class="relative rounded-2xl overflow-auto shadow-lg bg-white w-full max-w-[393px] h-[616px] mx-auto flex flex-col justify-center items-stretch">
+      <div class="relative z-40 flex-1 flex flex-col h-full w-full overflow-hidden">
+        <Controls :city="city" :country="country" :local-time="localTime"@open-search="toggleSearchDrawer" @open-list="toggleDrawer" @city-selected="fetchWeather" />
+        <WeatherData v-if="weatherData" :weather-data="weatherData" @open-search="toggleSearchDrawer" />
         <Overlay />
       </div>
 
