@@ -1,387 +1,120 @@
 <script setup lang="ts">
-  import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-  import { useHead } from '#app'
-  import { useUnsplash } from '~/composables/useUnsplash'
-  import { useWeather, type WeatherData } from '~/composables/useWeather'
-  import { useCityAutocomplete } from '~/composables/useCityAutocomplete'
+  const searchedCities = useLocalStorage<SearchedCity[]>('searched-cities', [])
+  const currentCityName = useLocalStorage('current-city', 'Miami')
 
-  const config = useRuntimeConfig()
-  const apiKey = config.public.openWeatherApiKey
+  // 2. COMPOSABLES (Reactive)
+  // These will automatically re-fetch when currentCityName changes
+  const { query, suggestions } = useCityAutocomplete()
+  const { photo } = useUnsplash(currentCityName)
+  const { 
+    data: weatherData, 
+    status: weatherStatus, 
+    refresh: refreshWeather 
+  } = useWeather(currentCityName)
 
-  useHead({
-    title: 'Home'
-  })
-
-  interface UnsplashPhoto {
-    id: string
-    urls: { regular: string }
-    alt_description?: string
-    city?: string
-  }
-
-  interface SearchedCity {
-    city: string
-    weather: WeatherData | null
-    photo: UnsplashPhoto | null
-    timestamp: number
-  }
-
-  // Constants
-  const cache_duration = 1000 * 60 * 60 * 3 // 3 hours
-  const static_city = 'Miami'
-
-  // Weather icon mapping
-  function getWeatherIcon(id?: number): string {
-    if (id == null) return 'ph:question'
-    if (id >= 200 && id < 300) return 'wi:storm-showers'
-    if (id >= 300 && id < 400) return 'wi:sprinkle'
-    if (id >= 500 && id < 600) return 'wi:rain'
-    if (id >= 600 && id < 700) return 'wi:snow'
-    if (id === 701) return 'wi:strong-wind'
-    if (id === 711) return 'wi:smoke'
-    if (id === 721) return 'wi:fog'
-    if (id === 731 || id === 761) return 'wi:strong-wind'
-    if (id === 741) return 'wi:fog'
-    if (id === 751) return 'wi:strong-wind'
-    if (id === 762) return 'wi:smoke'
-    if (id === 771) return 'wi:strong-wind'
-    if (id === 781) return 'wi:tornado'
-    if (id === 800) return 'wi:day-sunny'
-    if (id > 800 && id < 805) return 'wi:cloudy'
-    return 'ph:question'
-  }
-
-  // Composables
-  const { photo, loading, error, fetchPhoto } = useUnsplash()
-  const weather = useWeather()
-  const { query, suggestions } = useCityAutocomplete(apiKey)
-
-  // State
+  // 3. UI STATE
   const showDrawer = ref(false)
   const showSearchDrawer = ref(false)
   const localTime = ref('')
-  const city = ref('')
-  const weatherData = ref<WeatherData | null>(null)
-  const photoData = ref<UnsplashPhoto | null>(null)
-  const searchedCities = ref<SearchedCity[]>([])
-  const isInitialLoading = ref(true)
-  // Computed properties
-  const currentTemp = computed(() => weatherData.value?.main.temp ?? null)
-  const tempMin = computed(() => weatherData.value?.main.temp_min ?? null)
-  const tempMax = computed(() => weatherData.value?.main.temp_max ?? null)
-  const weatherMain = computed(() => weatherData.value?.weather?.[0]?.main || 'Rain')
-  const country = computed(() => weatherData.value?.sys.country || '')
 
-  // LocalStorage utilities
-  const storage = {
-    get<T>(key: string): T | null {
-      const item = localStorage.getItem(key)
-      if (!item) return null
-      try {
-        return JSON.parse(item)
-      } catch {
-        return null
-      }
-    },
+  // 4. COMPUTED PROPERTIES
+  const isInitialLoading = computed(() => weatherStatus.value === 'pending')
+  const currentTemp = computed(() => weatherData.value?.main?.temp ?? null)
+  const country = computed(() => weatherData.value?.sys?.country || '')
+  const weatherIcon = computed(() => getWeatherIcon(weatherData.value?.weather?.[0]?.id))
 
-    set(key: string, value: any): void {
-      localStorage.setItem(key, JSON.stringify(value))
-    },
-
-    remove(key: string): void {
-      localStorage.removeItem(key)
-    },
-
-    isValid(key: string, maxAge: number = cache_duration): boolean {
-      const item = this.get<{ timestamp: number }>(key)
-      if (!item?.timestamp) return false
-      return Date.now() - item.timestamp < maxAge
-    }
-  }
-
-  // Time management
-  function updateLocalTime() {
-    if (!weatherData.value?.timezone) {
-      localTime.value = ''
-      return
-    }
-    
-    const utcTime = new Date().getTime() + new Date().getTimezoneOffset() * 60000
-    const cityTime = new Date(utcTime + weatherData.value.timezone * 1000)
-    
-    const hours = cityTime.getHours().toString().padStart(2, '0')
-    const minutes = cityTime.getMinutes().toString().padStart(2, '0')
-    localTime.value = `${hours}:${minutes}`
-  }
-
-  // Weather operations
-  async function fetchWeather(cityName: string) {
-    const cachedKey = `weather_${cityName}`
-    
-    // Try cache first (local storage layer)
-    if (storage.isValid(cachedKey)) {
-      const cached = storage.get<{ data: WeatherData }>(cachedKey)
-      if (cached?.data) {
-        weatherData.value = cached.data
-        updateLocalTime()
-        return
-      }
-    }
-
-    // Fetch using composable (has its own cache layer)
-    const { data, error: weatherError } = await weather.fetch(cityName)
-    if (weatherError) {
-      throw new Error(weatherError.message)
-    }
-
-    weatherData.value = data
-    storage.set(cachedKey, {
-      data,
-      timestamp: Date.now()
-    })
-    updateLocalTime()
-  }
-
-  // Photo operations
-  function loadPhotoFromStorage() {
-    const cached = storage.get<{ photo: UnsplashPhoto }>('unsplashPhoto')
-    if (cached?.photo) {
-      photoData.value = cached.photo
-    }
-  }
-
-  function savePhotoToStorage(photo: UnsplashPhoto, cityName: string) {
-    storage.set('unsplashPhoto', {
-      city: cityName,
-      photo,
-      timestamp: Date.now()
-    })
-  }
-
-  // City search - consolidated single function
-  async function searchCity(cityName: string) {
-    const trimmedCity = cityName.trim()
-    if (!trimmedCity) return
-
-    // Close search drawer
-    showSearchDrawer.value = false
-    query.value = ''
-    suggestions.value = []
-
-    // Check for duplicates
-    const exists = searchedCities.value.some(
-      c => c.city.toLowerCase() === trimmedCity.toLowerCase()
-    )
-    if (exists) {
-      // Just load existing city
-      const existing = searchedCities.value.find(
-        c => c.city.toLowerCase() === trimmedCity.toLowerCase()
-      )
-      if (existing) loadCity(existing)
-      return
-    }
-
-    try {
-      // Fetch both in parallel
-      await Promise.all([
-        fetchPhoto(trimmedCity),
-        fetchWeather(trimmedCity)
-      ])
-
-      // Add to searched cities
-      const newCity: SearchedCity = {
-        city: trimmedCity,
-        weather: weatherData.value,
-        photo: photo.value,
-        timestamp: Date.now()
-      }
-
-      searchedCities.value.push(newCity)
-      storage.set('searchedCities', searchedCities.value)
-      storage.set('currentCity', trimmedCity)
-      
-      city.value = trimmedCity
-    } catch (err) {
-      console.error('Error searching city:', err)
-      alert('Failed to fetch city data. Please try again.')
-    }
-  }
-
-  // Autocomplete selection
-  async function selectCity(suggestion: { name: string; country: string }) {
-    await searchCity(suggestion.name)
-  }
-
-  // City management
-  function loadCity(selectedCity: SearchedCity) {
-    if (!selectedCity) return
-
-    city.value = selectedCity.city
-    weatherData.value = selectedCity.weather
-    photoData.value = selectedCity.photo
-    showDrawer.value = false
-
-    // Refresh photo in background
-    fetchPhoto(selectedCity.city)
-    storage.set('currentCity', selectedCity.city)
-    updateLocalTime()
-  }
-
-  function removeCity(index: number) {
-    searchedCities.value.splice(index, 1)
-    storage.set('searchedCities', searchedCities.value)
-  }
-
-  // UI toggles
-  function toggleDrawer() {
-    showDrawer.value = !showDrawer.value
-  }
-
-  function toggleSearchDrawer() {
+  // 5. CORE OPERATIONS
+  const toggleDrawer = () => (showDrawer.value = !showDrawer.value)
+  const toggleSearchDrawer = () => {
     showSearchDrawer.value = !showSearchDrawer.value
     if (!showSearchDrawer.value) {
       query.value = ''
       suggestions.value = []
     }
   }
+  async function searchCity(cityName: string) {
+    const name = cityName.trim()
+    if (!name) return
 
-  // Storage event handler for cross-tab sync
-  function handleStorageEvent(e: StorageEvent) {
-    if (e.key === 'currentCity' && e.newValue) {
-      const newCity = e.newValue.trim()
-      if (newCity && newCity !== city.value) {
-        city.value = newCity
-        fetchWeather(newCity).catch(console.error)
-      }
-    }
+    showSearchDrawer.value = false
+    currentCityName.value = name
   }
 
-  // Initialization
-  async function initialize() {
-    // Load searched cities from storage
-    const stored = storage.get<SearchedCity[]>('searchedCities')
-    if (stored && Array.isArray(stored)) {
-      searchedCities.value = stored
-    }
-
-    // Determine startup city
-    let currentCity = storage.get<string>('currentCity') || ''
-    
-    if (!currentCity && searchedCities.value.length > 0) {
-      // Use most recent searched city
-      const sorted = [...searchedCities.value].sort(
-        (a, b) => (b.timestamp || 0) - (a.timestamp || 0)
-      )
-      currentCity = sorted[0]?.city || ''
-    }
-
-    if (!currentCity) {
-      currentCity = static_city
-      storage.set('currentCity', currentCity)
-    }
-
-    city.value = currentCity
-
-    // Check cache validity
-    const hasValidPhoto = storage.isValid('unsplashPhoto')
-    const hasValidWeather = storage.isValid(`weather_${currentCity}`)
-
-    if (hasValidPhoto && hasValidWeather) {
-      // Load from cache
-      loadPhotoFromStorage()
-      const cached = storage.get<{ data: WeatherData }>(`weather_${currentCity}`)
-      if (cached?.data) {
-        weatherData.value = cached.data
-        updateLocalTime()
-      }
-      isInitialLoading.value = false
-    } else {
-      // Fetch fresh data
-      try {
-        await Promise.all([
-          fetchPhoto(currentCity),
-          fetchWeather(currentCity)
-        ])
-      } catch (err) {
-        console.error('Failed to load initial data:', err)
-      } finally {
-        isInitialLoading.value = false
-      }
-    }
+  function selectCity(suggestion: { name: string; country: string }) {
+    searchCity(suggestion.name)
   }
 
-  // Watchers
-  watch(
-    () => weatherData.value,
-    (newWeather) => {
-      if (newWeather) {
-        updateLocalTime()
-      }
-    },
-    { immediate: true }
-  )
+  function loadCity(saved: SearchedCity) {
+    currentCityName.value = saved.city
+    showDrawer.value = false
+  }
 
-  watch(
-    () => photo.value,
-    (newPhoto) => {
-      if (newPhoto && city.value) {
-        photoData.value = newPhoto
-        savePhotoToStorage(newPhoto, city.value)
-        
-        // Prefetch image
-        if (newPhoto.urls?.regular) {
-          useHead({
-            link: [
-              { 
-                rel: 'prefetch', 
-                href: newPhoto.urls.regular, 
-                as: 'image', 
-                crossorigin: 'anonymous' 
-              }
-            ]
-          })
-        }
-      }
-    },
-    { immediate: true }
-  )
+  function removeCity(index: number) {
+    searchedCities.value.splice(index, 1)
+  }
 
-  // Lifecycle
-  onMounted(() => {
-    // Initialize time update interval
-    const timeInterval = setInterval(updateLocalTime, 60 * 1000)
+  // 6. TIME LOGIC
+  const updateLocalTime = () => {
+    const timezone = weatherData.value?.timezone
+    if (timezone === undefined) return
     
-    // Listen for storage changes (cross-tab sync)
-    window.addEventListener('storage', handleStorageEvent)
+    const utc = new Date().getTime() + new Date().getTimezoneOffset() * 60000
+    const cityTime = new Date(utc + (timezone * 1000))
+    localTime.value = cityTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+  }
 
-    // Initialize app
-    initialize()
+  // 7. HISTORY SYNC
+  watch([weatherData, photo], ([newWeather, newPhoto]) => {
+    // 1. Strict null check
+    if (!newWeather || !newPhoto) return
 
-    onUnmounted(() => {
-      clearInterval(timeInterval)
-      window.removeEventListener('storage', handleStorageEvent)
-    })
+    const cityName = newWeather.name || currentCityName.value
+
+    const exists = searchedCities.value.some(
+      c => c.city.toLowerCase() === cityName.toLowerCase()
+    )
+
+    if (!exists) {
+      searchedCities.value.push({
+        city: cityName,
+        weather: newWeather as WeatherData, 
+        photo: newPhoto,
+        timestamp: Date.now()
+      })
+    }
+  }, { deep: true })
+
+  // 8. LIFECYCLE & SEO
+  useHead({
+    title: computed(() => `Weather in ${currentCityName.value}`),
+    link: computed(() => photo.value?.urls?.regular ? [
+      { rel: 'prefetch', href: photo.value.urls.regular, as: 'image', crossorigin: 'anonymous' }
+    ] : [])
   })
+
+  // Use Interval utility for automatic cleanup on unmount
+  useIntervalFn(updateLocalTime, 60000)
+  watch(weatherData, updateLocalTime, { immediate: true })
 </script>
 <template>
   <div class="flex flex-col justify-center h-screen bg-gray-100 p-8 dark:bg-gray-900">
     <div class="relative rounded-2xl overflow-auto shadow-lg bg-white w-full max-w-[393px] h-[616px] mx-auto flex flex-col justify-center items-stretch">
       <div class="relative z-40 flex-1 flex flex-col h-full w-full overflow-hidden">
-        <Controls :city="city" :country="country" :local-time="localTime"@open-search="toggleSearchDrawer" @open-list="toggleDrawer" @city-selected="fetchWeather" />
+        <Controls :city="currentCityName" :country="country" :local-time="localTime"@open-search="toggleSearchDrawer" @open-list="toggleDrawer" />
         <WeatherData v-if="weatherData" :weather-data="weatherData" @open-search="toggleSearchDrawer" />
         <Overlay />
       </div>
 
       <SplashScreen v-if="isInitialLoading" />
 
-      <div v-if="photoData" class="absolute inset-0">
+      <div v-if="photo" class="absolute inset-0">
         <div class="w-full h-full filter brightness-110 contrast-110 saturate-110"
-          :style="'background-image: url(' + photoData.urls.regular + '); background-size: cover; background-position: center'">
+          :style="'background-image: url(' + photo.urls.regular + '); background-size: cover; background-position: center'">
         </div>
         <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-black/30"></div>
       </div>
 
-      <div v-if="error" class="absolute inset-0 bg-sky-950"></div>
+      <!--<div v-if="error" class="absolute inset-0 bg-sky-950"></div>-->
       <Transition name="slide-left">
         <div v-if="showDrawer || showSearchDrawer" class="absolute inset-0 bg-slate-100/40 z-40" @click.self="toggleDrawer"></div>
       </Transition>
@@ -438,7 +171,7 @@
             </div>
             <div class="flex-1 w-full">
               <!-- Autocomplete dropdown -->
-              <ul v-if="suggestions.length > 0" class="w-full flex flex-col bg-gray-700 text-yellow-50/90 mt-1 rounded shadow max-h-48 overflow-auto">
+              <ul v-if="suggestions?.length" class="w-full flex flex-col bg-gray-700 text-yellow-50/90 mt-1 rounded shadow max-h-48 overflow-auto">
                 <li v-for="(s, index) in suggestions" :key="index"
                   @click="selectCity(s)"
                   class="px-3 py-2 hover:bg-gray-600 cursor-pointer"

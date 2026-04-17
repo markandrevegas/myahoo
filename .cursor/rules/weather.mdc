@@ -1,0 +1,10 @@
+---
+description: Logic rules for OpenWeather and Unsplash integrations.
+globs: ["app/composables/useWeather.ts", "server/api/weather/**/*"]
+---
+
+# Weather Integration Rules
+
+- **OpenWeather API:** Always use `units=metric` and fetch from `process.env.OPENWEATHER_KEY`.
+- **Image Logic:** Unsplash queries must be localized to the city name provided in the search.
+- **Caching:** Leverage Nuxt 4 `useFetch` keys: `key: 'weather-' + city.value`.

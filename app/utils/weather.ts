@@ -1,0 +1,15 @@
+export const getWeatherIcon = (id?: number): string => {
+  if (id == null) return 'ph:question'
+  if (id >= 200 && id < 300) return 'wi:storm-showers'
+  if (id >= 300 && id < 400) return 'wi:sprinkle'
+  if (id >= 500 && id < 600) return 'wi:rain'
+  if (id >= 600 && id < 700) return 'wi:snow'
+  if (id === 701 || id === 741) return 'wi:fog'
+  if (id === 711 || id === 762) return 'wi:smoke'
+  if (id === 721) return 'wi:fog'
+  if (id === 731 || id === 761 || id === 751 || id === 771) return 'wi:strong-wind'
+  if (id === 781) return 'wi:tornado'
+  if (id === 800) return 'wi:day-sunny'
+  if (id > 800 && id < 805) return 'wi:cloudy'
+  return 'ph:question'
+}

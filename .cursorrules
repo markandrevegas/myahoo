@@ -1,0 +1,21 @@
+# Global Project Identity: Nuxt 4 Weather App
+
+## Architecture
+- **Framework:** Nuxt 4 (Strict `app/` directory usage).
+- **Core Files:** - Components: `app/components/`
+  - Logic: `app/composables/`
+  - Server: `server/api/` (Nitro)
+
+## Development Workflow (Existing Project)
+- **Context First:** Always use `@Codebase` to search for existing utilities before generating new code.
+- **Composable Priority:** Use the existing `useWeather` (@app/composables/useWeather.ts) for all weather data.
+- **Styling:** Tailwind CSS only. Use existing theme tokens from `tailwind.config.ts`. 
+
+## Naming & Style
+- **Vue Components:** PascalCase filenames and tags.
+- **Composables:** `use[Name]` convention.
+- **Strictness:** No `any` types. Use Nuxt 4 auto-imports; do not manually import `ref`, `computed`, etc.
+
+## Data Fetching Rules
+- **Caching:** Always implement `getCachedData` in `useAsyncData` with a 10-minute TTL (Time To Live).
+- **Transform:** Use the `transform` function to attach a `fetchedAt` timestamp to API responses for cache validation.

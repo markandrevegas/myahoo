@@ -53,7 +53,7 @@ export default defineNuxtConfig({
 			pathPrefix: false
 		}
 	],
-	modules: ["@nuxtjs/tailwindcss", "@nuxt/fonts", "@nuxt/icon", "@nuxt/image", "@nuxt/test-utils/module"],
+	modules: ["@nuxtjs/tailwindcss", "@nuxt/fonts", "@nuxt/icon", "@nuxt/image", "@nuxt/test-utils/module", "@vueuse/nuxt", "@vueuse/nuxt"],
 	runtimeConfig: {
 		unsplashAccessKey: process.env.UNSPLASH_ACCESS_KEY,
 		openWeatherApiKey: process.env.OPENWEATHER_API_KEY,
