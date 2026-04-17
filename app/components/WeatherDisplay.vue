@@ -1,9 +1,11 @@
 <script setup lang="ts">
+  const props = defineProps<{
+    weatherData?: WeatherData | null
+  }>()
+  const emit = defineEmits(['open-search'])
   const searchedCities = useLocalStorage<SearchedCity[]>('searched-cities', [])
   const currentCityName = useLocalStorage('current-city', 'Miami')
 
-  // 2. COMPOSABLES (Reactive)
-  // These will automatically re-fetch when currentCityName changes
   const { query, suggestions } = useCityAutocomplete()
   const { photo } = useUnsplash(currentCityName)
   const { 
@@ -12,16 +14,14 @@
     refresh: refreshWeather 
   } = useWeather(currentCityName)
 
-  // 3. UI STATE
+  // state
   const showDrawer = ref(false)
   const showSearchDrawer = ref(false)
   const localTime = ref('')
 
-  // 4. COMPUTED PROPERTIES
+  // computed props
   const isInitialLoading = computed(() => weatherStatus.value === 'pending')
-  const currentTemp = computed(() => weatherData.value?.main?.temp ?? null)
   const country = computed(() => weatherData.value?.sys?.country || '')
-  const weatherIcon = computed(() => getWeatherIcon(weatherData.value?.weather?.[0]?.id))
 
   // 5. CORE OPERATIONS
   const toggleDrawer = () => (showDrawer.value = !showDrawer.value)
@@ -101,7 +101,9 @@
     <div class="relative rounded-2xl overflow-auto shadow-lg bg-white w-full max-w-[393px] h-[616px] mx-auto flex flex-col justify-center items-stretch">
       <div class="relative z-40 flex-1 flex flex-col h-full w-full overflow-hidden">
         <Controls :city="currentCityName" :country="country" :local-time="localTime"@open-search="toggleSearchDrawer" @open-list="toggleDrawer" />
-        <WeatherData v-if="weatherData" :weather-data="weatherData" @open-search="toggleSearchDrawer" />
+        <template v-if="weatherData && weatherStatus !== 'pending'">
+          <WeatherData :weather-data="weatherData!" @open-search="toggleSearchDrawer" />
+        </template>
         <Overlay />
       </div>
 
@@ -170,7 +172,6 @@
               <input @keyup.enter="() => searchCity(query)" type="text" placeholder="Enter city name..." v-model="query" class="flex-1 text-lg focus:outline-none placeholder:text-yellow-50/50" />
             </div>
             <div class="flex-1 w-full">
-              <!-- Autocomplete dropdown -->
               <ul v-if="suggestions?.length" class="w-full flex flex-col bg-gray-700 text-yellow-50/90 mt-1 rounded shadow max-h-48 overflow-auto">
                 <li v-for="(s, index) in suggestions" :key="index"
                   @click="selectCity(s)"

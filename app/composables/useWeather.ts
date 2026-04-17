@@ -37,7 +37,7 @@ export function useWeather(city: Ref<string> | string) {
 				return {
 					...data,
 					fetchedAt: Date.now()
-				}
+				} as WeatherData
 			}
 		}
 	)

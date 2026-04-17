@@ -1,24 +1,34 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { WeatherData } from '~/composables/useWeather'
 
 interface WeatherDataProps {
-  weatherData: WeatherData
+  weatherData: WeatherData | null
 }
 
 const props = defineProps<WeatherDataProps>()
 const emit = defineEmits(['open-search'])
 
-// Local computed properties for clean template logic
-const weatherMain = computed(() => props.weatherData?.weather?.[0]?.main || 'Rain')
-const tempMax = computed(() => props.weatherData?.main?.temp_max ?? null)
-const tempMin = computed(() => props.weatherData?.main?.temp_min ?? null)
+const weatherMain = computed(() => props.weatherData?.weather?.[0]?.main || '---')
+const currentTemp = computed(() => {
+  const t = props.weatherData?.main?.temp
+  return t !== undefined ? Math.round(t) : null
+})
 
-const windSpeed = computed(() => props.weatherData?.wind?.speed ?? null)
-const humidity = computed(() => props.weatherData?.main?.humidity ?? null)
+const tempMax = computed(() => {
+  const t = props.weatherData?.main?.temp_max
+  return t !== undefined ? Math.round(t) : null
+})
 
-// Move the icon logic here or keep it in a shared util. 
-// For now, I'll include it here for self-containment.
+const tempMin = computed(() => {
+  const t = props.weatherData?.main?.temp_min
+  return t !== undefined ? Math.round(t) : null
+})
+
+const windSpeed = computed(() => props.weatherData?.wind?.speed ?? 0)
+const humidity = computed(() => props.weatherData?.main?.humidity ?? 0)
+
+const weatherIconId = computed(() => props.weatherData?.weather?.[0]?.id)
+
 function getWeatherIcon(id?: number): string {
   if (id == null) return 'ph:question'
   if (id >= 200 && id < 300) return 'wi:storm-showers'
@@ -37,16 +47,16 @@ function getWeatherIcon(id?: number): string {
       <p class="text-center">{{ weatherMain }}</p>
       <div class="flex items-start justify-center">
         <span class="text-center text-8xl font-light tabular-nums font-sans tracking-tighter leading-none">
-          {{ Math.round(weatherData.main.temp) }}
+          {{ currentTemp ?? '--' }}
         </span>
         <span class="text-4xl font-semibold pt-3">&deg;C</span>
       </div>
       <div class="grid grid-cols-2 w-full text-center">
         <div>
-          <p>High: <span>{{ tempMax !== null ? tempMax.toFixed(0) : '--' }}</span><span>&deg;C</span></p>
+          <p>High: <span>{{ tempMax ?? '--' }}</span><span>&deg;C</span></p>
         </div>
         <div>
-          <p>Low: <span>{{ tempMin !== null ? tempMin.toFixed(0) : '--' }}</span><span>&deg;C</span></p>
+          <p>Low: <span>{{ tempMin ?? '--' }}</span><span>&deg;C</span></p>
         </div>
       </div>
       <div class="grid grid-cols-2 w-full bg-white/30 rounded-3xl p-2 text-white">
@@ -69,9 +79,9 @@ function getWeatherIcon(id?: number): string {
       <span>Search cities...</span>
     </button>
 
-    <div class="hidden flex flex-col items-center gap-4">
+    <div class="flex flex-col items-center gap-4">
       <div class="flex justify-start items-center gap-2">
-        <Icon :name="getWeatherIcon(weatherData.weather?.[0]?.id)" class="size-12" />
+        <Icon :name="getWeatherIcon(weatherData?.weather?.[0]?.id)" class="size-12" />
         <span class="text-2xl capitalize">{{ weatherMain }}</span>
       </div>
 

@@ -70,7 +70,7 @@
       </button>
     </div>
     <div class="h-48 flex flex-col gap-1 justify-center text-center">
-      <p class="text-2xl font-light">{{ props.city }}, {{ props.country }}</p>
+      <p class="text-2xl font-light"><span class="capitalize">{{ props.city }}</span>, {{ props.country }}</p>
       <div class="flex justify-center gap-4">
         <p v-if="isClientMounted && formattedDate" class="inline-block text-center text-palladian">
           {{ formattedDate }}
