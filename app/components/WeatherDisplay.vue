@@ -107,9 +107,6 @@
     searchedCities.value.splice(index, 1)
   }
 
-  /**
-   * Time logic
-   */
   const updateLocalTime = () => {
     const timezone = weatherData.value?.timezone
     if (timezone === undefined) return
@@ -124,9 +121,6 @@
     })
   }
 
-  /**
-   * History sync
-   */
   watch([weatherData, photo], ([newWeather, newPhoto]) => {
     if (!newWeather || !newPhoto) return
 
@@ -146,28 +140,21 @@
     }
   }, { deep: true })
 
-  /**
-   * SEO
-   */
   useHead({
     title: computed(() => `Weather in ${city.value}`),
     link: computed(() =>
-      photo.value?.urls?.regular
-        ? [
-            {
-              rel: 'prefetch',
-              href: photo.value.urls.regular,
-              as: 'image',
-              crossorigin: 'anonymous'
-            }
-          ]
-        : []
+      photo.value?.urls?.regular ? [
+          {
+            rel: 'prefetch',
+            href: photo.value.urls.regular,
+            as: 'image',
+            crossorigin: 'anonymous'
+          }
+        ]
+      : []
     )
   })
 
-  /**
-   * Lifecycle
-   */
   useIntervalFn(updateLocalTime, 60000)
   watch(weatherData, updateLocalTime, { immediate: true })
 </script>
@@ -234,27 +221,7 @@
         </aside>
       </Transition>
       <Transition name="slide-left" class="absolute top-0 left-0 w-full h-full bg-abyssal text-palladian z-50 p-4 flex flex-col">
-        <aside v-if="showSearchDrawer" class="absolute inset-0 flex flex-col gap-4">
-          <div class="flex-shrink-0 flex justify-between items-center my-4">
-            <h2 class="text-lg font-semibold">Add a new location</h2>
-            <button @click="toggleSearchDrawer" aria-label="Close">
-              <XIcon />
-            </button>
-          </div>
-          <div class="flex flex-col justify-center items-center bg-gray-600 rounded-lg">
-            <div class="w-full flex justify-start gap-4">
-              <SearchIcon />
-              <input @keyup.enter="() => searchCity(query)" type="text" placeholder="Enter city name..." v-model="query" class="flex-1 text-lg focus:outline-none placeholder:text-yellow-50/50" />
-            </div>
-            <div class="flex-1 w-full">
-              <ul v-if="suggestions?.length" class="w-full flex flex-col bg-gray-700 text-yellow-50/90 mt-1 rounded shadow max-h-48 overflow-auto">
-                <li v-for="(s, index) in suggestions" :key="index" @click="selectCity(s)" class="w-full h-4 px-3 py-2 hover:bg-gray-600 cursor-pointer">
-                  {{ s.name }}, {{ s.country }}
-                </li>
-              </ul>
-            </div>
-          </div>
-        </aside>
+        <CitySearchDrawer v-if="showSearchDrawer" v-model:query="query" :suggestions="suggestions" :loading="loading" @close="toggleSearchDrawer" @select="selectCity" @search="searchCity" />
       </Transition>
     </div>
   </div>
