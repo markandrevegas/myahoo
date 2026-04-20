@@ -2,51 +2,83 @@
   const props = defineProps<{
     weatherData?: WeatherData | null
   }>()
+
   const emit = defineEmits(['open-search'])
+
   const searchedCities = useLocalStorage<SearchedCity[]>('searched-cities', [])
   const currentCityName = useLocalStorage('current-city', 'Miami')
 
-  const cleanCityName = computed(() => {
-    const value = currentCityName.value
+  /**
+   * Split city + country into separate reactive values
+   * Example: "Glasgow,GB" → city="Glasgow", country="GB"
+   */
+  const city = computed(() => {
+    // Force cast to string to satisfy the compiler
+    const value = (currentCityName.value as string) || 'Miami'
+    if (!value) return ''
 
-    if (typeof value !== 'string' || !value.trim()) {
-      return 'Miami'
-    }
-
-    return value.split(',')[0].trim()
+    const parts = value.split(',')
+    return parts[0]?.trim() || ''
   })
 
+  const countryCode = computed(() => {
+    const value = currentCityName.value as string
+    if (!value) return ''
+
+    const parts = value.split(',')
+    return parts[1]?.trim() || ''
+  })
+
+  /**
+   * Composables now receive ONLY the city
+   */
   const { query, suggestions, loading } = useCityAutocomplete()
-  watch(query, (newQuery) => {
+
+  watch(query, newQuery => {
     if (newQuery.length < 3) {
       suggestions.value = []
     }
   })
-  const { photo } = useUnsplash(cleanCityName)
-  const { 
-    data: weatherData, 
-    status: weatherStatus, 
-    refresh: refreshWeather 
-  } = useWeather(currentCityName)
 
-  // state
+  const { photo } = useUnsplash(city)
+
+  const {
+    data: weatherData,
+    status: weatherStatus,
+    refresh: refreshWeather
+  } = useWeather(city)
+
+  /**
+   * State
+   */
   const showDrawer = ref(false)
   const showSearchDrawer = ref(false)
   const localTime = ref('')
 
-  // computed props
+  /**
+   * Computed
+   * Prefer API country, fallback to parsed countryCode
+   */
   const isInitialLoading = computed(() => weatherStatus.value === 'pending')
-  const country = computed(() => weatherData.value?.sys?.country || '')
 
-  // 5. CORE OPERATIONS
+  const country = computed(() => {
+    return weatherData.value?.sys?.country || countryCode.value
+  })
+
+  /**
+   * Core operations
+   */
   const toggleDrawer = () => (showDrawer.value = !showDrawer.value)
+
   const toggleSearchDrawer = () => {
     showSearchDrawer.value = !showSearchDrawer.value
+
     if (!showSearchDrawer.value) {
       query.value = ''
       suggestions.value = []
     }
   }
+
   async function searchCity(cityName: string) {
     const name = cityName.trim()
     if (!name) return
@@ -56,7 +88,9 @@
   }
 
   function selectCity(suggestion: any) {
+    // store "city,country" format
     const searchString = `${suggestion.name},${suggestion.country}`
+
     searchCity(searchString)
 
     query.value = ''
@@ -73,22 +107,30 @@
     searchedCities.value.splice(index, 1)
   }
 
-  // 6. TIME LOGIC
+  /**
+   * Time logic
+   */
   const updateLocalTime = () => {
     const timezone = weatherData.value?.timezone
     if (timezone === undefined) return
-    
+
     const utc = new Date().getTime() + new Date().getTimezoneOffset() * 60000
-    const cityTime = new Date(utc + (timezone * 1000))
-    localTime.value = cityTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+    const cityTime = new Date(utc + timezone * 1000)
+
+    localTime.value = cityTime.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    })
   }
 
-  // 7. HISTORY SYNC
+  /**
+   * History sync
+   */
   watch([weatherData, photo], ([newWeather, newPhoto]) => {
-    // 1. Strict null check
     if (!newWeather || !newPhoto) return
 
-    const cityName = newWeather.name || currentCityName.value
+    const cityName = newWeather.name || city.value
 
     const exists = searchedCities.value.some(
       c => c.city.toLowerCase() === cityName.toLowerCase()
@@ -97,22 +139,35 @@
     if (!exists) {
       searchedCities.value.push({
         city: cityName,
-        weather: newWeather as WeatherData, 
+        weather: newWeather as WeatherData,
         photo: newPhoto,
         timestamp: Date.now()
       })
     }
   }, { deep: true })
 
-  // 8. LIFECYCLE & SEO
+  /**
+   * SEO
+   */
   useHead({
-    title: computed(() => `Weather in ${currentCityName.value}`),
-    link: computed(() => photo.value?.urls?.regular ? [
-      { rel: 'prefetch', href: photo.value.urls.regular, as: 'image', crossorigin: 'anonymous' }
-    ] : [])
+    title: computed(() => `Weather in ${city.value}`),
+    link: computed(() =>
+      photo.value?.urls?.regular
+        ? [
+            {
+              rel: 'prefetch',
+              href: photo.value.urls.regular,
+              as: 'image',
+              crossorigin: 'anonymous'
+            }
+          ]
+        : []
+    )
   })
 
-  // Use Interval utility for automatic cleanup on unmount
+  /**
+   * Lifecycle
+   */
   useIntervalFn(updateLocalTime, 60000)
   watch(weatherData, updateLocalTime, { immediate: true })
 </script>
@@ -120,7 +175,7 @@
   <div class="flex flex-col justify-center h-screen bg-gray-100 p-8 dark:bg-gray-900">
     <div class="relative rounded-2xl overflow-auto shadow-lg bg-white w-full max-w-[393px] h-[616px] mx-auto flex flex-col justify-center items-stretch">
       <div class="relative z-40 flex-1 flex flex-col h-full w-full overflow-hidden">
-        <Controls :city="cleanCityName" :country="country" :local-time="localTime"@open-search="toggleSearchDrawer" @open-list="toggleDrawer" />
+        <Controls :city="city" :country="country" :local-time="localTime"@open-search="toggleSearchDrawer" @open-list="toggleDrawer" />
         <template v-if="weatherData && weatherStatus !== 'pending'">
           <WeatherData :weather-data="weatherData!" @open-search="toggleSearchDrawer" />
         </template>
