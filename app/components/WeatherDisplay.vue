@@ -6,8 +6,23 @@
   const searchedCities = useLocalStorage<SearchedCity[]>('searched-cities', [])
   const currentCityName = useLocalStorage('current-city', 'Miami')
 
-  const { query, suggestions } = useCityAutocomplete()
-  const { photo } = useUnsplash(currentCityName)
+  const cleanCityName = computed(() => {
+    const value = currentCityName.value
+
+    if (typeof value !== 'string' || !value.trim()) {
+      return 'Miami'
+    }
+
+    return value.split(',')[0].trim()
+  })
+
+  const { query, suggestions, loading } = useCityAutocomplete()
+  watch(query, (newQuery) => {
+    if (newQuery.length < 3) {
+      suggestions.value = []
+    }
+  })
+  const { photo } = useUnsplash(cleanCityName)
   const { 
     data: weatherData, 
     status: weatherStatus, 
@@ -40,8 +55,13 @@
     currentCityName.value = name
   }
 
-  function selectCity(suggestion: { name: string; country: string }) {
-    searchCity(suggestion.name)
+  function selectCity(suggestion: any) {
+    const searchString = `${suggestion.name},${suggestion.country}`
+    searchCity(searchString)
+
+    query.value = ''
+    suggestions.value = []
+    showSearchDrawer.value = false
   }
 
   function loadCity(saved: SearchedCity) {
@@ -100,7 +120,7 @@
   <div class="flex flex-col justify-center h-screen bg-gray-100 p-8 dark:bg-gray-900">
     <div class="relative rounded-2xl overflow-auto shadow-lg bg-white w-full max-w-[393px] h-[616px] mx-auto flex flex-col justify-center items-stretch">
       <div class="relative z-40 flex-1 flex flex-col h-full w-full overflow-hidden">
-        <Controls :city="currentCityName" :country="country" :local-time="localTime"@open-search="toggleSearchDrawer" @open-list="toggleDrawer" />
+        <Controls :city="cleanCityName" :country="country" :local-time="localTime"@open-search="toggleSearchDrawer" @open-list="toggleDrawer" />
         <template v-if="weatherData && weatherStatus !== 'pending'">
           <WeatherData :weather-data="weatherData!" @open-search="toggleSearchDrawer" />
         </template>
@@ -173,15 +193,11 @@
             </div>
             <div class="flex-1 w-full">
               <ul v-if="suggestions?.length" class="w-full flex flex-col bg-gray-700 text-yellow-50/90 mt-1 rounded shadow max-h-48 overflow-auto">
-                <li v-for="(s, index) in suggestions" :key="index"
-                  @click="selectCity(s)"
-                  class="px-3 py-2 hover:bg-gray-600 cursor-pointer"
-                >
+                <li v-for="(s, index) in suggestions" :key="index" @click="selectCity(s)" class="w-full h-4 px-3 py-2 hover:bg-gray-600 cursor-pointer">
                   {{ s.name }}, {{ s.country }}
                 </li>
               </ul>
             </div>
-
           </div>
         </aside>
       </Transition>

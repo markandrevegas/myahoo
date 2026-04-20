@@ -1,22 +1,29 @@
 // app/composables/useCityAutocomplete.ts
 export function useCityAutocomplete() {
-	const query = ref("")
+  const query = ref("")
+  
+  const {
+    data: suggestions,
+    status,
+    error
+  } = useFetch<any[]>("/api/geo-proxy", {
+    query: { q: query },
+    watch: [query],
+    immediate: false,
+    default: () => [],
+    transform: (data) => {
+      if (!data || !Array.isArray(data)) return []
+      
+      const seen = new Set()
+      return data.filter(item => {
+        const duplicate = seen.has(`${item.name}-${item.country}`)
+        seen.add(`${item.name}-${item.country}`)
+        return !duplicate
+      })
+    }
+  })
 
-	const {
-		data: suggestions,
-		status,
-		error
-	} = useFetch("/api/geo-proxy", {
-		query: { q: query },
-		watch: [query],
-		immediate: false,
-		// Only fetch if query is > 2 chars
-		transform: (data: any[]) => {
-			if (!data) return []
-			// Your unique filtering logic here...
-			return data
-		}
-	})
+  const loading = computed(() => status.value === 'pending')
 
-	return { query, suggestions, loading: status, error }
+  return { query, suggestions, loading, error }
 }
