@@ -42,7 +42,12 @@
   const handleOpenList = () => {
     emit('open-list')
   }
-
+  watch(() => props.localTime, () => {
+    updateFormattedDateTime()
+  })
+  watch(() => props.country, (newCountry, oldCountry) => {
+    console.log(`Country changed from ${oldCountry} to ${newCountry}`)
+  })
   onMounted(() => {
     isClientMounted.value = true
     updateFormattedDateTime()
@@ -54,11 +59,6 @@
       clearInterval(interval)
     })
   })
-
-  // Watch for localTime prop changes
-  watch(() => props.localTime, () => {
-    updateFormattedDateTime()
-  })
 </script>
 
 <template>
@@ -68,7 +68,7 @@
       <div class="flex flex-col items-center">
         <div class="flex justify-start items-center gap-1">
           <LocationIcon class="scale-50" />
-          <p class="font-light text-lg"><span class="capitalize">{{ props.city }}</span>, {{ props.country }}</p>
+          <p class="text-xl"><span class="capitalize">{{ props.city }}</span>, {{ props.country }}</p>
         </div>
         
         <div class="flex justify-center gap-4">

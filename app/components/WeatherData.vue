@@ -59,7 +59,7 @@ watch(
 </script>
 
 <template>
-  <div class="relative z-50 flex-1 flex flex-col justify-end text-palladian bg-green-500/30 p-6">
+  <div class="relative z-50 flex-1 flex flex-col justify-end text-palladian p-6">
     <div class="flex flex-col min-h-48">
       <div class="flex flex-col items-start">
         <div class="flex justify-start items-center gap-1">
@@ -68,11 +68,11 @@ watch(
         </div>
         <div class="flex gap-4">
           <span class="inline-flex justify-start items-center gap-1">
-            <HighTempIcon />
+            <span class="font-light text-lg">↑</span>
             <span class="leading-none">{{ tempMax ?? '--' }}</span>
           </span>
           <span class="inline-flex justify-start items-center gap-1">
-            <LowTempIcon/>
+            <span class="font-light text-lg">↓</span>
             <span class="leading-none">{{ tempMin ?? '--' }}</span>
           </span>
         </div>

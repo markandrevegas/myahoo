@@ -17,9 +17,11 @@
   })
 
   const countryCode = computed(() => {
-    const value = currentCityName.value as string
-    if (!value) return ''
+    if (weatherData.value && weatherData.value.sys) {
+      return weatherData.value.sys.country
+    }
 
+    const value = currentCityName.value as string
     const parts = value.split(',')
     return parts[1]?.trim() || ''
   })
