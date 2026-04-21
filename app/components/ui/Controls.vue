@@ -25,8 +25,7 @@
 
     const now = new Date()
     const dateOptions = { 
-      weekday: 'long', 
-      // year: 'numeric', 
+      weekday: 'long',
       month: 'long', 
       day: 'numeric' 
     } as const
@@ -65,20 +64,23 @@
 <template>
   <div class="relative w-full flex flex-col text-palladian z-50">
     <div class="w-full flex justify-between items-center p-8">
-      <ColorModeToggle />
-      <SearchIcon @click="emit('open-search')" class="text-white" />
       <MenuIcon @click="handleOpenList" />
-    </div>
-    <div class="h-24 flex flex-col gap-1 justify-center text-center">
-      <p class="text-2xl font-light"><span class="capitalize">{{ props.city }}</span>, {{ props.country }}</p>
-      <div class="flex justify-center gap-4">
-        <p v-if="isClientMounted && formattedDate" class="inline-block text-center text-palladian">
-          {{ formattedDate }}
-        </p>
-        <p v-if="isClientMounted && formattedTime" class="inline-block text-center text-palladian">
-          {{ formattedTime }}
-        </p>
+      <div class="flex flex-col items-center">
+        <div class="flex justify-start items-center gap-1">
+          <LocationIcon class="scale-50" />
+          <p class="font-light text-lg"><span class="capitalize">{{ props.city }}</span>, {{ props.country }}</p>
+        </div>
+        
+        <div class="flex justify-center gap-4">
+          <p v-if="isClientMounted && formattedDate" class="hidden inline-block text-center text-palladian">
+            {{ formattedDate }}
+          </p>
+          <p v-if="isClientMounted && formattedTime" class="inline-block text-center text-palladian">
+            {{ formattedTime }}
+          </p>
+        </div>
       </div>
+      <PlusIcon @click="emit('open-search')" class="scale-125 hover:cursor-pointer"/>
     </div>
   </div>
 </template>

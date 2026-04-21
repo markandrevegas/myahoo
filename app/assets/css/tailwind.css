@@ -11,6 +11,12 @@
   }
 }
 
+@layer components {
+  .tracking-minimum {
+    letter-spacing: -0.475rem;
+  }
+}
+
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
     display: none; /* Chrome, Safari, Edge */

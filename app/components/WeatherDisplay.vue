@@ -84,17 +84,22 @@
   }
 
   const updateLocalTime = () => {
-    const timezone = weatherData.value?.timezone
+    const timezone = weatherData.value?.timezone // Offset in seconds
     if (timezone === undefined) return
 
     const utc = new Date().getTime() + new Date().getTimezoneOffset() * 60000
     const cityTime = new Date(utc + timezone * 1000)
 
-    localTime.value = cityTime.toLocaleTimeString([], {
+    const timeStr = cityTime.toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false
     })
+    
+    const hours = timezone / 3600
+    const designation = `UTC${hours >= 0 ? '+' : ''}${hours}`
+
+    localTime.value = `${timeStr} ${designation}`
   }
 
   watch([weatherData, photo], ([newWeather, newPhoto]) => {
@@ -139,9 +144,7 @@
     <div class="relative rounded-2xl overflow-auto shadow-lg bg-white w-full max-w-[393px] h-[616px] mx-auto flex flex-col justify-center items-stretch">
       <div class="relative z-40 flex-1 flex flex-col h-full w-full overflow-hidden">
         <Controls :city="city" :country="countryCode" :local-time="localTime"@open-search="toggleSearchDrawer" @open-list="toggleDrawer" />
-        <template v-if="weatherData && weatherStatus !== 'pending'">
-          <WeatherData :weather-data="weatherData!" @open-search="toggleSearchDrawer" />
-        </template>
+        <WeatherData v-if="weatherData && weatherStatus !== 'pending'" :weather-data="weatherData!" @open-search="toggleSearchDrawer" />
         <Overlay />
       </div>
       <SplashScreen v-if="isInitialLoading" />
