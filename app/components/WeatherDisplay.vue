@@ -8,12 +8,7 @@
   const searchedCities = useLocalStorage<SearchedCity[]>('searched-cities', [])
   const currentCityName = useLocalStorage('current-city', 'Miami')
 
-  /**
-   * Split city + country into separate reactive values
-   * Example: "Glasgow,GB" → city="Glasgow", country="GB"
-   */
   const city = computed(() => {
-    // Force cast to string to satisfy the compiler
     const value = (currentCityName.value as string) || 'Miami'
     if (!value) return ''
 
@@ -29,9 +24,6 @@
     return parts[1]?.trim() || ''
   })
 
-  /**
-   * Composables now receive ONLY the city
-   */
   const { query, suggestions, loading } = useCityAutocomplete()
 
   watch(query, newQuery => {
@@ -48,26 +40,11 @@
     refresh: refreshWeather
   } = useWeather(city)
 
-  /**
-   * State
-   */
   const showDrawer = ref(false)
   const showSearchDrawer = ref(false)
   const localTime = ref('')
-
-  /**
-   * Computed
-   * Prefer API country, fallback to parsed countryCode
-   */
   const isInitialLoading = computed(() => weatherStatus.value === 'pending')
 
-  const country = computed(() => {
-    return weatherData.value?.sys?.country || countryCode.value
-  })
-
-  /**
-   * Core operations
-   */
   const toggleDrawer = () => (showDrawer.value = !showDrawer.value)
 
   const toggleSearchDrawer = () => {
@@ -88,7 +65,6 @@
   }
 
   function selectCity(suggestion: any) {
-    // store "city,country" format
     const searchString = `${suggestion.name},${suggestion.country}`
 
     searchCity(searchString)
@@ -159,25 +135,17 @@
   watch(weatherData, updateLocalTime, { immediate: true })
 </script>
 <template>
-  <div class="flex flex-col justify-center h-screen bg-gray-100 p-8 dark:bg-gray-900">
+  <div class="flex flex-col justify-center h-screen p-8">
     <div class="relative rounded-2xl overflow-auto shadow-lg bg-white w-full max-w-[393px] h-[616px] mx-auto flex flex-col justify-center items-stretch">
       <div class="relative z-40 flex-1 flex flex-col h-full w-full overflow-hidden">
-        <Controls :city="city" :country="country" :local-time="localTime"@open-search="toggleSearchDrawer" @open-list="toggleDrawer" />
+        <Controls :city="city" :country="countryCode" :local-time="localTime"@open-search="toggleSearchDrawer" @open-list="toggleDrawer" />
         <template v-if="weatherData && weatherStatus !== 'pending'">
           <WeatherData :weather-data="weatherData!" @open-search="toggleSearchDrawer" />
         </template>
         <Overlay />
       </div>
-
       <SplashScreen v-if="isInitialLoading" />
-
-      <div v-if="photo" class="absolute inset-0">
-        <div class="w-full h-full filter brightness-110 contrast-110 saturate-110"
-          :style="'background-image: url(' + photo.urls.regular + '); background-size: cover; background-position: center'">
-        </div>
-        <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-black/30"></div>
-      </div>
-
+      <CityPhoto :photo="photo" />
       <!--<div v-if="error" class="absolute inset-0 bg-sky-950"></div>-->
       <Transition name="slide-left">
         <div v-if="showDrawer || showSearchDrawer" class="absolute inset-0 bg-slate-100/40 z-40" @click.self="toggleDrawer"></div>
@@ -220,7 +188,7 @@
           </div>
         </aside>
       </Transition>
-      <Transition name="slide-left" class="absolute top-0 left-0 w-full h-full bg-abyssal text-palladian z-50 p-4 flex flex-col">
+      <Transition name="slide-left" class="absolute top-0 left-0 w-full h-full z-50 p-4 flex flex-col">
         <CitySearchDrawer v-if="showSearchDrawer" v-model:query="query" :suggestions="suggestions" :loading="loading" @close="toggleSearchDrawer" @select="selectCity" @search="searchCity" />
       </Transition>
     </div>

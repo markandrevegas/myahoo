@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import HumidityIcon from './icons/HumidityIcon.vue';
 
 interface WeatherDataProps {
   weatherData: WeatherData | null
@@ -24,7 +25,16 @@ const tempMin = computed(() => {
   return t !== undefined ? Math.round(t) : null
 })
 
-const windSpeed = computed(() => props.weatherData?.wind?.speed ?? 0)
+const windSpeed = computed(() => {
+  const speed = props.weatherData?.wind?.speed
+  return speed !== undefined ? Math.floor(speed) : 0
+})
+
+const airPressure = computed(() => {
+  const pressure = props.weatherData?.main?.pressure
+  return pressure !== undefined ? Math.floor(pressure) : 0
+})
+
 const humidity = computed(() => props.weatherData?.main?.humidity ?? 0)
 
 const weatherIconId = computed(() => props.weatherData?.weather?.[0]?.id)
@@ -39,11 +49,18 @@ function getWeatherIcon(id?: number): string {
   if (id > 800 && id < 805) return 'wi:cloudy'
   return 'ph:question'
 }
+watch(
+  () => props.weatherData,
+  (val) => {
+    console.log('weatherData:', val)
+  },
+  { immediate: true, deep: true }
+)
 </script>
 
 <template>
   <div class="relative z-50 flex-1 flex flex-col justify-start items-center text-palladian">
-    <div class="flex flex-col gap-1 justify-center w-3/5 mx-auto">
+    <div class="flex flex-col gap-4 justify-center w-4/5 mx-auto">
       <p class="text-center">{{ weatherMain }}</p>
       <div class="flex items-start justify-center">
         <span class="text-center text-8xl font-light tabular-nums font-sans tracking-tighter leading-none">
@@ -51,35 +68,51 @@ function getWeatherIcon(id?: number): string {
         </span>
         <span class="text-4xl font-semibold pt-3">&deg;C</span>
       </div>
-      <div class="grid grid-cols-2 w-full text-center">
-        <div>
-          <p>High: <span>{{ tempMax ?? '--' }}</span><span>&deg;C</span></p>
+      <div class="grid grid-cols-2 w-4/5 mx-auto leading-none text-white gap-4">
+        <div class="col-span-1 flex flex-col gap-2 bg-white/30 rounded-xl p-4">
+          <span class="inline-flex justify-start items-center gap-2 text-xxs">
+            <HighTempIcon class="size-5" /><span>High</span>
+          </span>
+          <span class="inline-flex items-start gap-1">
+            <span class="text-2xl leading-none">{{ tempMax ?? '--' }}</span>
+            <span class="text-sm relative -top-[2px]">&deg;C</span>
+          </span>
         </div>
-        <div>
-          <p>Low: <span>{{ tempMin ?? '--' }}</span><span>&deg;C</span></p>
+        <div class="col-span-1 flex flex-col gap-2 bg-white/30 rounded-xl p-4">
+          <span class="inline-flex justify-start items-center gap-2 text-xxs">
+            <LowTempIcon class="size-5" /><span>Low</span>
+          </span>
+          <span class="inline-flex items-start gap-1">
+            <span class="text-2xl leading-none">{{ tempMin ?? '--' }}</span>
+            <span class="text-sm relative -top-[2px]">&deg;C</span>
+          </span>
         </div>
-      </div>
-      <div class="grid grid-cols-2 w-full bg-white/30 rounded-3xl p-2 text-white">
-        <div class="col-span-1 flex flex-col gap-2 justify-center items-center">
-          <HumidityIcon class="scale-125"/>
-          <span class="text-[12px]">{{ humidity }} %</span>
+        <div class="col-span-1 flex flex-col gap-2 bg-white/30 rounded-xl p-4">
+          <span class="inline-flex justify-start items-center gap-2 text-xxs">
+            <HumidityIcon class="size-5" /><span>Humidity</span>
+          </span>
+          <span class="inline-flex items-start gap-1">
+            <span class="tabular-nums text-2xl leading-none">{{ humidity }}</span>
+            <span class="text-sm relative -top-[2px]">%</span>
+          </span>
         </div>
-        <div class="col-span-1 flex flex-col gap-2 justify-center items-center">
-          <WindIcon class="scale-125"/>
-          <span class="text-[12px]">{{ windSpeed }} m/s</span>
+        <div class="col-span-1 flex flex-col gap-2 bg-white/30 rounded-xl p-4">
+          <span class="inline-flex justify-start items-center gap-2 text-xxs">
+            <WindIcon class="size-5" /><span>Wind</span>
+          </span>
+          <span class="inline-flex items-start gap-1">
+            <span class="tabular-nums text-2xl leading-none">{{ windSpeed }}</span>
+            <span class="text-sm relative -top-[2px]">m/s</span>
+          </span>
+        </div>
+        <div class="hidden col-span-1 flex flex-col items-center">
+          <BarometerIcon class="size-5" />
+          <span class="tabular-nums"><span>{{ airPressure }}</span> hPa</span>
         </div>
       </div>
     </div>
 
-    <button 
-      @click="emit('open-search')" 
-      class="flex justify-start items-center gap-1 pl-1 pr-4 py-1 bg-zinc-200/80 rounded-full text-[11px] text-abyssal font-medium"
-    >
-      <SearchIcon class="scale-50" />
-      <span>Search cities...</span>
-    </button>
-
-    <div class="flex flex-col items-center gap-4">
+    <div class="hidden flex flex-col items-center gap-4">
       <div class="flex justify-start items-center gap-2">
         <Icon :name="getWeatherIcon(weatherData?.weather?.[0]?.id)" class="size-12" />
         <span class="text-2xl capitalize">{{ weatherMain }}</span>

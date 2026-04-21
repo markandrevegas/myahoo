@@ -1,62 +1,9 @@
 <template>
-  <span class="cursor-pointer select-none transition-colors duration-200 flex items-center justify-center overflow-hidden"
-    @mouseenter="mouseEnterHandler"
-    @mouseleave="mouseLeaveHandler"
-    role="button"
-    tabindex="0"
-  >
-    <Motion
-      ref="target"
-      is="svg"
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <circle cx="11" cy="11" r="8" />
-      <path d="m21 21-4.3-4.3" />
-    </Motion>
-  </span>
+  <svg width="24" height="24" viewBox="0 0 24 24" stroke-width="1.5" fill="none" xmlns="http://www.w3.org/2000/svg" color="currentColor"><path d="M17 17L21 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M3 11C3 15.4183 6.58172 19 11 19C13.213 19 15.2161 18.1015 16.6644 16.6493C18.1077 15.2022 19 13.2053 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
 </template>
 
 <script>
 export default {
   name: 'SearchIcon',
 };
-</script>
-
-<script setup>
-import { MotionComponent as Motion, useMotion } from '@vueuse/motion';
-
-const target = ref();
-
-const variants = {
-  normal: { x: 0, y: 0 },
-  animate: {
-    x: [0, 0, -3, 0],
-    y: [0, -4, 0, 0],
-    transition: {
-      type: 'spring',
-      duration: 1000,
-      bounce: 0.3,
-    },
-  },
-};
-const motionInstance = useMotion(target, {
-  initial: variants.normal,
-  enter: variants.normal,
-});
-
-function mouseEnterHandler() {
-  motionInstance.apply(variants.animate);
-}
-
-function mouseLeaveHandler() {
-  motionInstance.apply(variants.normal);
-}
 </script>

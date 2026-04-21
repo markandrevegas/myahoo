@@ -1,3 +1,5 @@
+import WeatherData from "~/components/WeatherData.vue"
+
 export function useWeather(city: Ref<string> | string) {
 	const cityRef = isRef(city) ? city : ref(city)
 	const nuxtApp = useNuxtApp()

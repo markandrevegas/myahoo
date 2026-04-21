@@ -1,47 +1,11 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { useUnsplash } from '~/composables/useUnsplash'
-
-const city = ref('')
-const { photo, loading, error, fetchPhoto } = useUnsplash()
-watch(
-  () => photo.value?.urls?.regular,
-  (url) => {
-    if (url) {
-      useHead({
-        link: [
-          { rel: 'prefetch', href: url, as: 'image', crossorigin: 'anonymous' }
-        ]
-      })
-    }
-  }
-)
-const emits = defineEmits<{
-  (e: 'update:photo', photo: any): void
-}>()
-
-// Watch photo changes and emit to parent
-watch(photo, (newPhoto) => {
-  if (newPhoto) emits('update:photo', newPhoto)
-})
-
-function handleSearch() {
-  fetchPhoto(city.value)
-}
+	interface Photo { urls: { regular: string } }
+	defineProps<{ photo?: Photo | null }>()
 </script>
 
 <template>
-  <div class="p-6 text-center">
-    <input
-      v-model="city"
-      placeholder="Enter a city name"
-      class="border rounded p-2 w-64 mb-4"
-    />
-    <button @click="handleSearch" class="bg-blue-500 text-white px-4 py-2 rounded">
-      Search
-    </button>
-
-    <div v-if="loading" class="mt-4">Loading...</div>
-    <div v-if="error" class="text-red-500 mt-4">{{ error }}</div>
+  <div v-if="photo" class="absolute inset-0 z-0">
+    <div class="w-full h-full filter brightness-110 contrast-110 saturate-110" :style="{ backgroundImage: `url(${photo.urls.regular})`, backgroundSize: 'cover', backgroundPosition: 'center' }"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-black/30"></div>
   </div>
 </template>

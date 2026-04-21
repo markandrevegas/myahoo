@@ -64,12 +64,12 @@
 
 <template>
   <div class="relative w-full flex flex-col text-palladian z-50">
-    <div class="w-full h-24 p-4 hidden">
-      <button @click="handleOpenList" class="scale-75">
-        <MenuIcon />
-      </button>
+    <div class="w-full flex justify-between items-center p-8">
+      <ColorModeToggle />
+      <SearchIcon @click="emit('open-search')" class="text-white" />
+      <MenuIcon @click="handleOpenList" />
     </div>
-    <div class="h-48 flex flex-col gap-1 justify-center text-center">
+    <div class="h-24 flex flex-col gap-1 justify-center text-center">
       <p class="text-2xl font-light"><span class="capitalize">{{ props.city }}</span>, {{ props.country }}</p>
       <div class="flex justify-center gap-4">
         <p v-if="isClientMounted && formattedDate" class="inline-block text-center text-palladian">

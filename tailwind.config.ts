@@ -8,6 +8,9 @@ export default <Partial<Config>>{
 			fontFamily: {
 				sans: ['"Inter"', "ui-sans-serif", "system-ui", "sans-serif"]
 			},
+			fontSize: {
+				xxs: "10px"
+			},
 			keyframes: {
 				flash: {
 					"0%,100%": { opacity: 0, transform: "scale(.3)" },
