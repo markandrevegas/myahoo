@@ -17,13 +17,16 @@
   })
 
   const countryCode = computed(() => {
-    if (weatherData.value && weatherData.value.sys) {
+    const isStale = weatherData.value?.name?.toLowerCase() !== city.value.toLowerCase()
+    if (weatherData.value?.sys && !isStale) {
       return weatherData.value.sys.country
     }
 
     const value = currentCityName.value as string
+    if (!value || !value.includes(',')) return ''
+    
     const parts = value.split(',')
-    return parts[1]?.trim() || ''
+    return parts[parts.length - 1]?.trim() || ''
   })
 
   const { query, suggestions, loading } = useCityAutocomplete()
@@ -77,7 +80,8 @@
   }
 
   function loadCity(saved: SearchedCity) {
-    currentCityName.value = saved.city
+    const country = saved.weather?.sys?.country || ''
+    currentCityName.value = `${saved.city}, ${country}`
     showDrawer.value = false
   }
 
@@ -152,9 +156,9 @@
       <SplashScreen v-if="isInitialLoading" />
       <CityPhoto :photo="photo" />
       <!--<div v-if="error" class="absolute inset-0 bg-sky-950"></div>-->
-      <Transition name="slide-left">
+      <!--<Transition name="slide-left">
         <div v-if="showDrawer || showSearchDrawer" class="absolute inset-0 bg-slate-100/40 z-40" @click.self="toggleDrawer"></div>
-      </Transition>
+      </Transition>-->
       <Transition name="slide-left">
         <aside v-if="showDrawer" class="absolute top-0 left-0 w-full h-full bg-abyssal text-palladian z-50 p-4 flex flex-col">
           <div class="flex-shrink-0 flex justify-between items-center my-4">

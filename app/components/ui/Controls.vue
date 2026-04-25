@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref, onMounted, onUnmounted } from 'vue'
+  import { ref, onMounted, onUnmounted, watch } from 'vue'
 
   const emit = defineEmits<{
     (e: 'open-search'): void
@@ -45,9 +45,6 @@
   watch(() => props.localTime, () => {
     updateFormattedDateTime()
   })
-  watch(() => props.country, (newCountry, oldCountry) => {
-    console.log(`Country changed from ${oldCountry} to ${newCountry}`)
-  })
   onMounted(() => {
     isClientMounted.value = true
     updateFormattedDateTime()
@@ -68,14 +65,14 @@
       <div class="flex flex-col items-center">
         <div class="flex justify-start items-center gap-1">
           <LocationIcon class="scale-50" />
-          <p class="text-xl"><span class="capitalize">{{ props.city }}</span>, {{ props.country }}</p>
+          <p class="text-lg"><span class="capitalize">{{ props.city }}</span>, {{ props.country }}</p>
         </div>
         
         <div class="flex justify-center gap-4">
           <p v-if="isClientMounted && formattedDate" class="hidden inline-block text-center text-palladian">
             {{ formattedDate }}
           </p>
-          <p v-if="isClientMounted && formattedTime" class="inline-block text-center text-palladian">
+          <p v-if="isClientMounted && formattedTime" class="text-sm inline-block text-center text-palladian">
             {{ formattedTime }}
           </p>
         </div>
